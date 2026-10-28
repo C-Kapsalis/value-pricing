@@ -1,0 +1,4 @@
+vendor,plan,price,currency,period,is_recommended,is_free,is_quote,limit_seats,limit_sources,limit_monthly_orders,source_url
+example-rival.com,Basic,29,USD,month,0,0,0,1,3,500,https://example-rival.com/pricing
+example-rival.com,Growth,99,USD,month,1,0,0,5,10,5000,https://example-rival.com/pricing
+example-rival.com,Enterprise,,USD,month,0,0,1,,,,https://example-rival.com/pricing

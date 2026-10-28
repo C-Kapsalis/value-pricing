@@ -1,0 +1,75 @@
+# value_drivers.yaml — the valuation rubric (phase 3). One line per way a feature creates value.
+# Conservative on purpose. Every default is a named parameter with a range, so Sobol can move it and
+# the council can narrow it. Quantities, triggers, at_risk and excess are expressions over scenario variables.
+
+params:                     # value = default; range = Sobol bounds (and the council's elicited range)
+  action_rate:      {value: 0.30, range: [0.10, 0.60]}   # share of fired insights the buyer acts on
+  realisation_rate: {value: 0.50, range: [0.20, 0.80]}   # share of the modelled effect that lands
+  capture_share:    {value: 0.20, range: [0.10, 0.30]}   # share of value a seller can charge (Nagle)
+  share_moved:      {value: 0.10, range: [0.05, 0.20]}   # reallocate: share of the affected quantity moved
+  efficiency_delta: {value: 0.15, range: [0.05, 0.30]}   # reallocate: efficiency gain on what moved
+  waste_share:      {value: 0.05, range: [0.02, 0.10]}   # waste: share that was waste and is cut
+  recovery_share:   {value: 0.05, range: [0.02, 0.15]}   # revenue_retained: share of the at-risk amount recovered
+  protect_share:    {value: 0.10, range: [0.05, 0.25]}   # margin: share of the excess clawed back
+  hours_per_view:   {value: 0.25, range: [0.10, 0.50]}   # hours saved per prebuilt view per month
+
+# The € formula per type. q = the line's quantity; at_risk / excess = the line's expressions.
+# insight: true → multiplied by action_rate × realisation_rate; delivered value is not.
+types:
+  reallocate:       {formula: "q * share_moved * efficiency_delta", insight: true}
+  waste:            {formula: "q * waste_share", insight: true}
+  revenue_retained: {formula: "q * at_risk * recovery_share * gross_margin", insight: true}
+  margin:           {formula: "q * excess * protect_share", insight: true}
+  risk:             {formula: "q * at_risk", insight: true}            # q = loss if it happens, at_risk = probability
+  hours:            {formula: "q * hours_per_view * hourly_rate", insight: false}   # q = views or tasks replaced
+  cost_replaced:    {formula: "q", insight: false}                     # q = a cost the buyer stops paying
+  delivered_work:   {formula: "q * hourly_rate", insight: false}       # q = hours of done-for-you work
+
+# Caps per scenario-month, so overlapping lines are not double-counted.
+caps:
+  - {types: [reallocate, waste], max: "0.10 * ad_spend"}
+  - {types: [revenue_retained], max: "0.03 * gmv * gross_margin"}
+  - {types: [margin], max: "0.02 * gmv"}
+
+lines:
+  # id; feature (taxonomy id that delivers it); needs (other features it requires); type; quantity;
+  # trigger (bool expression) or p_fire (probability); optional at_risk / excess; text = how the insight
+  # reads to a buyer (the panel and the council see it); cue_quantity: true adds "about €X a month involved".
+  - id: spend_reallocation
+    feature: budget_recommendations
+    needs: [ad_platform_connectors]
+    type: reallocate
+    quantity: ad_spend
+    p_fire: 0.35
+    cue_quantity: true
+    text: Budget is concentrated in one channel whose cost per order rose; it recommends moving part of it.
+  - id: spend_surge
+    feature: budget_pacing_alerts
+    needs: [ad_platform_connectors]
+    type: waste
+    quantity: ad_spend
+    p_fire: 0.15
+    cue_quantity: true
+    text: Spend surged above the weekly pace with no rise in orders.
+  - id: refund_spike
+    feature: product_analytics
+    needs: []
+    type: margin
+    quantity: gmv
+    trigger: "refund_rate > 0.08"
+    excess: "refund_rate - 0.06"
+    text: Refund rate is above its normal band; the products driving it are listed.
+  - id: revenue_decline
+    feature: ai_prescriptive_insights
+    needs: []
+    type: revenue_retained
+    quantity: gmv
+    trigger: "yoy_growth < -0.05"
+    at_risk: "-yoy_growth"
+    text: Revenue is down year on year; the decline is traced to returning customers.
+  - id: dashboards
+    feature: dashboards_prebuilt
+    needs: []
+    type: hours
+    quantity: "8 + 0 * volume"
+    text: null

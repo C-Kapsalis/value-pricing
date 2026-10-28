@@ -1,0 +1,23 @@
+# taxonomy.yaml — THE feature vocabulary. Market coding (phase 2) and value drivers (phase 3) both use
+# these ids; synthesis joins on them.
+# - Phrase features the way a competitor's listing would advertise them, not internal names.
+# - ours: yes | partial | no (as delivered to a self-serve buyer; evidence lives in offering.yaml).
+# - Include features we lack but competitors advertise (ours: no): needed to price the market, and the
+#   roadmap signal.
+# - Adding: the market phase may add ids found on >=2% of competitors (added_by, date; log in DECISIONS.md).
+#   Never rename or delete an id; deprecate it with `deprecated: true`.
+# - scale_axis: true = usually priced by quantity; code its limit (plans.csv limit_<axis>), not just presence.
+version: 1
+features:
+  - {id: dashboards_prebuilt,      group: reporting,   ours: yes, desc: "Prebuilt dashboards / saved views"}
+  - {id: ad_platform_connectors,   group: data,        ours: yes, scale_axis: true, desc: "Pulls spend and performance from ad platforms"}
+  - {id: budget_pacing_alerts,     group: analysis,    ours: partial, desc: "Spend pacing alerts and anomaly detection"}
+  - {id: budget_recommendations,   group: analysis,    ours: yes, desc: "Recommends budget reallocation across channels"}
+  - {id: product_analytics,        group: analysis,    ours: yes, desc: "Product mix, discount and refund analysis"}
+  - {id: ai_prescriptive_insights, group: ai,          ours: yes, desc: "AI returns diagnoses and recommended actions, not just charts"}
+  - {id: multi_touch_attribution,  group: measurement, ours: no,  desc: "Multi-touch attribution models on orders"}
+  - {id: seats,                    group: commercial,  ours: yes, scale_axis: true, desc: "Number of user seats"}
+  - {id: free_trial,               group: commercial,  ours: yes, desc: "Free trial"}
+  - {id: free_plan,                group: commercial,  ours: no,  desc: "Permanent free plan"}
+# The 5-7 attributes buyers actually trade off (phase 4b). Levels live in study.yaml conjoint.attributes.
+conjoint: [price, sources, ai_depth, onboarding, support]

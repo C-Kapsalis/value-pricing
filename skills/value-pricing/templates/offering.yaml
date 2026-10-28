@@ -1,0 +1,21 @@
+# offering.yaml — the capability vector (phase 1). One entry per thing a buyer could be charged for.
+# status: yes | partial (gated, managed-only, limited, beta) | no (roadmap / absent)
+# evidence: a verbatim quote + its source. A `yes` resting on marketing copy alone needs a second source
+# (docs, changelog, vault, case study); without one, mark it partial and say why.
+moats:
+  - {claim: "...", evidence: "...", source: "..."}
+weak_points:
+  - {claim: "...", evidence: "...", source: "..."}
+features:
+  - id: dashboards_prebuilt
+    status: yes
+    evidence: {quote: "40+ ready-made reports", source: "https://example.com/features"}
+  - id: ad_platform_connectors
+    status: yes
+    scale_axis: true
+    quantity: "8 ad platforms"
+    gates: [budget_recommendations, budget_pacing_alerts]
+    evidence: {quote: "Connect Meta, Google, TikTok…", source: "https://example.com/integrations"}
+  - id: budget_pacing_alerts
+    status: partial
+    evidence: {quote: "Pacing alerts", source: "https://example.com/features", note: "docs show on-demand detection only, no push notification"}

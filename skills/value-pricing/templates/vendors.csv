@@ -1,0 +1,3 @@
+vendor,url,tier,category,target_customer,ctl_log_popularity
+example-rival.com,https://example-rival.com,direct,ecommerce analytics,smb,5.2
+__ours__,https://example.com,direct,ecommerce analytics,smb,4.8

@@ -1,0 +1,28 @@
+# costs.yaml — the cost structure (phase 5), from the owner interview. Every line: kind, amount, driver,
+# source. Unknown = a gap entry; never a plausible number.
+currency: EUR
+customers_now: 60                    # paying customers sharing the fixed platform today
+margin_targets: [0.70, 0.80, 0.85]
+lines:
+  - {line: base infrastructure, kind: fixed, eur_month: 900, source: "cloud invoice, last full month"}
+  - {line: reporting capacity, kind: fixed, eur_month: 400, source: "list price; invoice not read"}
+  # variable per customer: a per-segment map (eur_per_customer), or per_unit × the segment's reference_volume.
+  # When driver_regression.file is set, eur_per_customer lines are assumed covered by it unless
+  # covered_by_regression: false.
+  - {line: storage and queries, kind: variable, eur_per_customer: {micro: 0.4, small: 0.9, mid: 1.5, large: 3.0}, source: "owner estimate"}
+  - {line: LLM routing, kind: variable, per_unit: 0.0001, driver: volume, source: "owner estimate"}
+people:
+  hourly_rate: 60
+  support_hours_per_month: {micro: [0.02, 0.08], small: [0.05, 0.2], mid: [0.1, 0.4], large: [0.4, 1.5]}   # [low, high]
+  onboarding_hours_one_off: {micro: 0.2, small: 0.5, mid: 1.0, large: 3}
+  amortise_onboarding_months: 12
+channel:
+  revenue_share: 0.0                 # marketplace cut on app revenue (check the partner terms; often tiered)
+  processing: 0.03
+gaps:
+  - {what: support hours per customer, why: no time log, blocked_on: owner}
+# Optional: cost/data/per_customer.csv with a `cost` column and numeric driver columns; cost_model.py
+# fits cost ~ drivers by OLS and predicts each segment at drivers_by_segment, with a bootstrap interval.
+driver_regression:
+  file: null
+  drivers_by_segment: {micro: {integrations: 2, gib: 0.5}, small: {integrations: 3, gib: 1.0}, mid: {integrations: 5, gib: 3.0}, large: {integrations: 8, gib: 10.0}}

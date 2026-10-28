@@ -1,0 +1,25 @@
+# synthesis/proposals.yaml — the structures phase 6 scores. Each tier needs `config` (conjoint level
+# indices, for the panel lenses) and/or `features` (taxonomy ids or "all", for the value lens).
+# `segments` limits who sees a tier (a usage fence); omit it and every segment sees it (a capability
+# fence: buyers self-select). price_grid: the prices to search. people_hours: extra people time per
+# customer-month the tier carries. replaces_reference: false if the tier does NOT replace the buyer's
+# current tool (then its value excludes the reference alternative's cost).
+proposals:
+  - id: P1
+    name: Good-better-best on capability
+    tiers:
+      - {name: Lite, price_grid: [12, 19, 25, 35], config: {sources: 0, ai_depth: 1, onboarding: 0, support: 0}, features: [dashboards_prebuilt, product_analytics, ai_prescriptive_insights]}
+      - {name: Team, price_grid: [45, 59, 69, 89], config: {sources: 2, ai_depth: 2, onboarding: 0, support: 0}, features: [dashboards_prebuilt, product_analytics, ai_prescriptive_insights, ad_platform_connectors, budget_recommendations, budget_pacing_alerts]}
+      - {name: Business, price_grid: [129, 179, 229], config: {sources: 2, ai_depth: 2, onboarding: 1, support: 1}, features: all, people_hours: 0.5}
+  - id: P2
+    name: Usage bands on the segment axis
+    tiers:
+      - {name: "Up to 200", segments: [micro], price_grid: [8, 12, 15], config: {sources: 2, ai_depth: 2, onboarding: 0, support: 0}, features: all}
+      - {name: "Up to 2,000", segments: [small], price_grid: [19, 29, 35], config: {sources: 2, ai_depth: 2, onboarding: 0, support: 0}, features: all}
+      - {name: "Up to 20,000", segments: [mid], price_grid: [49, 59, 79], config: {sources: 2, ai_depth: 2, onboarding: 0, support: 0}, features: all}
+      - {name: Unlimited, segments: [large], price_grid: [149, 199, 249], config: {sources: 2, ai_depth: 2, onboarding: 1, support: 1}, features: all, people_hours: 0.5}
+  - id: P3
+    name: One base plan (add-ons priced separately for people time)
+    tiers:
+      - {name: Base, price_grid: [25, 35, 45, 59], config: {sources: 2, ai_depth: 2, onboarding: 0, support: 0}, features: all}
+competitors: []      # optional: [{name, price, config}] — nearest rivals mapped onto the conjoint attributes

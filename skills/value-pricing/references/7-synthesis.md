@@ -16,7 +16,8 @@ $PY $K/optimize_packages.py  --study pricing-study   # synthesis/data/proposals_
 - **Ceiling** = value: EVC × 10–30% capture, beside the panel's reservation price p25–p75. Where they
   disagree, say which you believe and why (the panel is optimistic in level).
 - **Working window** = from what buyers said (panel VW OPP, else EVC × 10%) up to the reference, never
-  below the floor or above the ceiling.
+  below the floor or above the EVC ceiling. The simulated panel p75 is shown as context, not substituted
+  for a missing or lower EVC ceiling.
 
 Flag every segment where the order breaks, and read it:
 - floor > ceiling → don't serve the segment at that cost, or serve it fully self-serve;

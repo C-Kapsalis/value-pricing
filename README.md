@@ -96,7 +96,8 @@ worth to customers". The skill asks before every expensive step and every judgem
 
 `scripts/selftest.py` runs every analysis script on a synthetic study with planted ground truth (feature
 premia, a meter elasticity, simulated buyers with known willingness to pay) and prints PASS/FAIL per
-check. Run it once after installing: `.venv-pricing/bin/python <path>/scripts/selftest.py`.
+check. Run it once after installing: `.venv-pricing/bin/python <path>/scripts/selftest.py --no-hb`.
+It writes to a new temporary directory by default; a supplied `--dir` must not already exist.
 
 At packaging time the hedonic model recovered all three planted premia inside its 90% intervals, the
 meter table recovered the planted elasticity (0.73 vs 0.75), and the HB conjoint recovered the planted

@@ -1,17 +1,21 @@
-numpy>=1.26
-pandas>=2.1
-pyarrow>=15
-scipy>=1.11
-scikit-learn>=1.4
-statsmodels>=0.14
-pyyaml>=6
-requests>=2.31
-beautifulsoup4>=4.12
-lxml>=5
-# conjoint_fit.py (HB-MNL); without these it falls back to a conditional logit
-numpyro>=0.15
-jax>=0.4.30
-# optional: crawl_site.py --browser   (then: playwright install chromium)
-# playwright>=1.45
-# optional: llm_batch.py --runner api
-# anthropic>=0.40
+# Core analysis dependencies, pinned to the versions used to validate release 0.1.1.
+numpy==2.5.4
+pandas==3.1.0
+pyarrow==26.0.0
+scipy==1.18.1
+scikit-learn==1.9.1
+statsmodels==0.15.0
+PyYAML==6.0.3
+requests==2.34.2
+beautifulsoup4==4.15.0
+lxml==6.1.3
+
+# Optional: hierarchical Bayes conjoint estimation.
+numpyro==0.22.0
+jax==0.12.0.1
+
+# Optional: crawl JavaScript-rendered sites (install Chromium separately).
+# playwright==1.64.1
+
+# Optional: use the Anthropic API runner instead of the user's Claude CLI plan.
+# anthropic==2.3.0

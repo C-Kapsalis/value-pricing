@@ -1,6 +1,6 @@
 {
   "name": "value-pricing",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Rigorous value-based pricing for any product: crawl the website and knowledge base, estimate each feature's added value, price it from three sides (market, cost, value), convene a persona council and a pre-registered silicon panel, then optimise packages against your cost structure.",
   "author": {
     "name": "Christoforos Kapsalis",

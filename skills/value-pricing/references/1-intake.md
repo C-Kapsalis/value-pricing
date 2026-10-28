@@ -29,7 +29,8 @@ $PY $K/ingest_corpus.py --study pricing-study --path ~/Vault --path ./decks
 ```
 
 - `crawl_site.py` honours robots.txt, waits ≥1 s between requests, sends an identifying user agent,
-  resumes from its state file, and prioritises pricing, features, product, integrations, docs,
+  blocks private/local addresses, nonstandard ports, redirects and browser requests outside the entered
+  public origin, resumes from its state file, and prioritises pricing, features, product, integrations, docs,
   customers and case-study pages. It uses Playwright when installed (`--browser`), else plain HTTP.
   An agent with its own browser tool (Playwright MCP, a web-fetch agent) can feed pages in instead:
   save each as `corpus/site/<host>/<slug>.md` with a `url:` front-matter line.

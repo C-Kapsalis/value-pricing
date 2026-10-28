@@ -54,8 +54,7 @@ def main():
             if len(q):
                 r["stated_opp"], r["stated_ipp"] = q.opp.iloc[0], q.ipp.iloc[0]
         lo = next((x for x in (r.get("stated_opp"), r.get("ceiling_lo")) if x is not None and x == x), None)
-        ceil = [x for x in (r.get("ceiling_hi"), r.get("panel_p75")) if x is not None]
-        ceil_hi = max(ceil) if ceil else None
+        ceil_hi = r.get("ceiling_hi")
         if lo is not None:
             r["window_lo"] = max(lo, r.get("floor") or 0)
         hi = [x for x in (r.get("reference_point"), ceil_hi) if x is not None]

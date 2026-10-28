@@ -1,6 +1,6 @@
 {
   "name": "value-pricing",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A value-based pricing workflow that triangulates market, cost and buyer value, then turns the evidence into testable package hypotheses.",
   "author": {
     "name": "Christoforos Kapsalis",

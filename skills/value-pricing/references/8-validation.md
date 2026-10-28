@@ -5,6 +5,11 @@ records what the owner decides.
 
 ## 1. Real-buyer survey
 
+This is a study plan, not a survey sender. Before contacting anyone, the owner must approve the frame,
+message, lawful basis/consent, suppression rules, vendor access, retention period and data minimisation.
+Do not put contact lists or identifiable responses in the skill workspace or in model prompts. The pilot
+invite count is a planning assumption, not an instruction to send invitations.
+
 - **Sample** from a real frame (CRM, lead base, newsletter, marketplace census), excluding current
   customers and staff, **stratified** by segment × the gate (e.g. with / without the key integration).
   ~150 completes per cell gives ±7 points on an acceptance share at 90% confidence; run a pilot wave

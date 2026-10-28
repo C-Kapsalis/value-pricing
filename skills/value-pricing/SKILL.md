@@ -1,6 +1,6 @@
 ---
 name: value-pricing
-description: Value-based pricing study for a product or service, from its website and knowledge base to a ratified price list. Use when someone wants to price or re-price an offering, design tiers or packages, estimate what each feature is worth to customers, or find willingness to pay. Triggers on "price my product", "what should we charge", "pricing tiers", "packaging", "willingness to pay", "value of each feature", "/value-pricing".
+description: Value-based pricing study for a product or service, from its website and knowledge base to a ratified price list. Use when someone wants to price or re-price an offering, design tiers or packages, estimate what each feature is worth to customers, or find willingness to pay. Triggers on "price my product", "what should we charge", "pricing tiers or packages", "willingness to pay", "value of each feature", "/value-pricing".
 ---
 
 # Value-based pricing
@@ -31,8 +31,16 @@ level wrong; say so on every page that quotes them.
   (`YYYY-MM-DD · phase · decision · why · who ruled`).
 - **Read-only** against anything in production. Raw crawls and transcripts stay outside git.
 - **Money** in one currency per study, per month, ex VAT; intervals are 90%.
+- Summary generation attempts a read-only `git rev-parse HEAD` in the study folder to record provenance; it
+  changes no files and records `null` when the folder is not a Git repository.
 - Before any expensive step (a crawl of hundreds of pages, LLM coding of a corpus, a panel of hundreds of
   calls) post a token and time estimate to the user and wait for a go.
+- Crawls are restricted to public HTTP(S) URLs on the entered origin and standard web ports. Private or
+  local addresses, cross-origin redirects and third-party browser requests are blocked.
+- Panel prompts contain business-derived personas, scenarios and value estimates. Remove names, customer
+  records and confidential inputs before sending prompts to Claude; the selected CLI or API provider receives
+  each prompt. The API runner is opt-in.
+- The skills do not start scripts or network jobs when loaded. Scripts run only when explicitly invoked.
 
 ## Workspace
 
@@ -53,7 +61,9 @@ pricing-study/
 Scripts live in this skill's `scripts/` and take `--study pricing-study`. Set up the environment once:
 `uv venv .venv-pricing && uv pip install --python .venv-pricing/bin/python -r <skill>/scripts/requirements.txt`
 (add `playwright` and run `playwright install chromium` for JS-heavy sites). Every script has `--help`.
-Run `scripts/selftest.py` once on a new machine: it checks every script against planted ground truth.
+Run `scripts/selftest.py --no-hb` once on a new machine: it checks every script against planted ground truth.
+The self-test creates a fresh temporary output directory by default. If `--dir` is supplied, the path must
+not already exist; the self-test never deletes an existing directory.
 Keep the study folder on persistent disk, not `/tmp`: a machine or VM restart clears `/tmp`.
 
 Parallel work: market, cost and value are independent. When they run as separate sessions or subagents,

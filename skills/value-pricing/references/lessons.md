@@ -90,5 +90,6 @@ Read it before phase 2 and again before phase 6.
 ## Running it
 
 - **Keep the study on persistent disk.** A machine or VM restart clears `/tmp` and kills running jobs.
-- **Run long jobs detached** (`setsid nohup … &`) and make them resumable; plan session limits interrupt
-  long panels, and a resumable runner reruns only what's missing.
+- **Keep long jobs in the foreground by default** and make them resumable; plan session limits interrupt
+  long panels, and a resumable runner reruns only what's missing. Only detach a batch when the owner
+  explicitly chooses that behavior, since it continues using compute and may incur model charges.

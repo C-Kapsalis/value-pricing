@@ -9,7 +9,7 @@ then runs value_mc, kappa, hedonic, value_metric, cost_model, conjoint_design, p
 panel_analyze, conjoint_fit (fallback, and HB unless --no-hb), synthesize, optimize_packages, and
 reports PASS/FAIL per check. Takes 5–20 minutes depending on the machine (HB is most of it).
 
-  selftest.py [--dir /tmp/value-pricing-selftest] [--no-hb]
+  selftest.py [--dir NEW_DIRECTORY] [--no-hb]
 """
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -41,9 +42,7 @@ def run(T, script, *args):
 
 
 def build(T: Path):
-    if T.exists():
-        shutil.rmtree(T)
-    (T / "synthesis").mkdir(parents=True)
+    (T / "synthesis").mkdir(parents=True, exist_ok=True)
     for f in ("study.yaml", "value_drivers.yaml", "taxonomy.yaml", "costs.yaml"):
         shutil.copy(TPL / f, T / f)
     shutil.copy(TPL / "proposals.yaml", T / "synthesis/proposals.yaml")
@@ -102,10 +101,17 @@ def simulate_panel(T: Path):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--dir", default="/tmp/value-pricing-selftest")
+    ap.add_argument("--dir", help="new output directory; must not already exist")
     ap.add_argument("--no-hb", action="store_true")
     a = ap.parse_args()
-    T = Path(a.dir)
+    if a.dir:
+        T = Path(a.dir).expanduser().resolve()
+        try:
+            T.mkdir(parents=True, exist_ok=False)
+        except FileExistsError:
+            ap.error(f"--dir already exists; choose a new empty path to protect its contents: {T}")
+    else:
+        T = Path(tempfile.mkdtemp(prefix="value-pricing-selftest-"))
     os.environ.setdefault("OMP_NUM_THREADS", "2")
     build(T)
     checks = []

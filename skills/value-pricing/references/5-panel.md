@@ -40,20 +40,28 @@ recovery result into the pre-registration's appendix, then commit it.
 
 ## 3. Instrument and sample
 
+**Privacy boundary.** Persona prompts and outputs are business-derived data. Remove personal identifiers,
+customer-level records, credentials and confidential details before generating or sending them. The CLI
+runner invokes the locally authenticated Claude CLI with no tools, no MCP and a restricted environment; the
+API runner is opt-in and sends prompts to Anthropic using the configured API credentials. Check the selected
+provider's data-use terms before using confidential material.
+
 ```bash
 $PY $K/llm_batch.py --study pricing-study --dir panel --workers 6 --expect choices,vw,gg
 ```
 
 - One respondent per call, with nothing else in its context. `llm_batch.py` uses `claude -p` with no
   tools, no MCP, no settings and a one-line system prompt, on the user's plan (≈9k tokens a respondent
-  vs ≈60k as a subagent). It strips `ANTHROPIC_API_KEY` unless `--runner api` is chosen by the owner.
+  vs ≈60k as a subagent). It passes only an allowlist of environment variables needed to locate the CLI
+  and its user configuration; API keys and unrelated variables are excluded.
 - Each persona is asked in every arm cell (anchor low/high × paraphrase 1/2) with byte-identical text
   except the manipulated element (Gui & Toubia), so arm effects are within-persona.
 - The prompt shows the persona what the value model flagged for its scenario this month. That is the EVC
   cue, deliberate, and a declared threat: it invites pricing against value.
 - Sample: 4 segments × 4 cells × ≥30 = 480 floor; 60 personas per segment (960 calls) target.
-- Run long batches detached (`setsid nohup … &`) so a closed session or tool timeout doesn't kill them;
-  re-running resumes.
+- Run batches in the foreground by default; completed responses are recorded and a rerun resumes. If the
+  owner explicitly chooses shell job control or a process supervisor, disclose that the batch continues to
+  use compute and may incur model charges after the initiating session closes.
 
 ## 4. Analyse
 

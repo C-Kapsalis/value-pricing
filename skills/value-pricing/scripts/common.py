@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
+import operator
 import subprocess
 from datetime import date
 from pathlib import Path
@@ -73,14 +75,85 @@ def status(v):
     return None if v is None else str(v).strip().lower()
 
 
+_BINARY_OPS = {
+    ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+    ast.Div: operator.truediv, ast.FloorDiv: operator.floordiv, ast.Mod: operator.mod,
+    ast.Pow: operator.pow, ast.BitAnd: operator.and_, ast.BitOr: operator.or_,
+}
+_UNARY_OPS = {ast.UAdd: operator.pos, ast.USub: operator.neg, ast.Not: np.logical_not, ast.Invert: operator.invert}
+_COMPARE_OPS = {
+    ast.Eq: operator.eq, ast.NotEq: operator.ne, ast.Lt: operator.lt, ast.LtE: operator.le,
+    ast.Gt: operator.gt, ast.GtE: operator.ge,
+}
+_SAFE_NUMPY = {
+    "abs": np.abs, "clip": np.clip, "exp": np.exp, "log": np.log,
+    "maximum": np.maximum, "minimum": np.minimum, "sqrt": np.sqrt, "where": np.where,
+}
+_SAFE_RNG = {"lognormal"}
+_SAFE_FUNCTIONS = {"abs": np.abs, "max": np.maximum, "min": np.minimum}
+
+
+def _expression_node(node, ns):
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float, bool)):
+        return node.value
+    if isinstance(node, ast.Name):
+        if node.id in _SAFE_FUNCTIONS:
+            return _SAFE_FUNCTIONS[node.id]
+        if node.id.startswith("_") or node.id not in ns:
+            raise ValueError(f"unknown or forbidden name in value expression: {node.id}")
+        return ns[node.id]
+    if isinstance(node, ast.BinOp) and type(node.op) in _BINARY_OPS:
+        return _BINARY_OPS[type(node.op)](_expression_node(node.left, ns), _expression_node(node.right, ns))
+    if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY_OPS:
+        return _UNARY_OPS[type(node.op)](_expression_node(node.operand, ns))
+    if isinstance(node, ast.BoolOp) and isinstance(node.op, (ast.And, ast.Or)):
+        values = [_expression_node(value, ns) for value in node.values]
+        fn = np.logical_and if isinstance(node.op, ast.And) else np.logical_or
+        result = values[0]
+        for value in values[1:]:
+            result = fn(result, value)
+        return result
+    if isinstance(node, ast.Compare):
+        left = _expression_node(node.left, ns)
+        results = []
+        for op, comparator in zip(node.ops, node.comparators):
+            if type(op) not in _COMPARE_OPS:
+                raise ValueError("comparison operator is not allowed in value expressions")
+            right = _expression_node(comparator, ns)
+            results.append(_COMPARE_OPS[type(op)](left, right))
+            left = right
+        result = results[0]
+        for value in results[1:]:
+            result = np.logical_and(result, value)
+        return result
+    if isinstance(node, ast.IfExp):
+        return np.where(_expression_node(node.test, ns), _expression_node(node.body, ns), _expression_node(node.orelse, ns))
+    if isinstance(node, ast.Call):
+        fn = _expression_node(node.func, ns)
+        if not callable(fn) or node.keywords:
+            raise ValueError("only positional calls to allowlisted functions are permitted in value expressions")
+        args = [_expression_node(arg, ns) for arg in node.args]
+        return fn(*args)
+    if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+        if node.value.id == "np" and node.attr in _SAFE_NUMPY:
+            return _SAFE_NUMPY[node.attr]
+        if node.value.id == "rng" and node.attr in _SAFE_RNG and "rng" in ns:
+            return getattr(ns["rng"], node.attr)
+    if isinstance(node, ast.Name) and node.id in _SAFE_FUNCTIONS:
+        return _SAFE_FUNCTIONS[node.id]
+    raise ValueError(f"unsupported syntax in value expression: {type(node).__name__}")
+
+
 def eval_expr(expr, ns: dict):
-    """Evaluate a config expression over numpy arrays. The config files are the owner's own, not untrusted input."""
+    """Evaluate the small arithmetic/NumPy expression language used by study YAML."""
     if isinstance(expr, (int, float)):
         return expr
-    return eval(str(expr), {"np": np, "__builtins__": {"min": min, "max": max, "abs": abs}}, ns)
+    tree = ast.parse(str(expr), mode="eval")
+    return _expression_node(tree.body, ns)
 
 
 def git_sha(root: Path) -> str | None:
+    """Read the study folder's current Git commit for summary provenance; no files are changed."""
     try:
         return subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
     except Exception:

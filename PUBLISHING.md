@@ -1,9 +1,8 @@
 # Packaging and publishing
 
 This repository includes the source, package builders and marketplace metadata
-for distributing Value Pricing. It has not been submitted to a public vendor
-directory. Recheck vendor requirements before a submission; the directory
-flows and policies can change.
+for distributing Value Pricing. Directory steps are manual; recheck vendor
+requirements before each submission because flows and policies can change.
 
 ## Build release archives
 
@@ -35,6 +34,19 @@ For a release, update the version in `.claude-plugin/plugin.json`,
 notes, then commit and push. Create and push a matching `vX.Y.Z` tag. The
 GitHub Actions workflow builds the archives and attaches them to the release.
 Never commit `dist/`; it is generated from the tagged source.
+
+## ClawHub skill (OpenClaw)
+
+The installable artifact is the Agent Skill directory `skills/value-pricing/`; it contains one
+`SKILL.md`, references, templates and local Python scripts. Publish it as a **skill**, not as a code
+plugin: it has no MCP server or plugin runtime. Before uploading, run the repository self-test and
+review ClawHub's security evidence. The skill's crawler restricts requests to public same-origin web
+destinations; its self-test refuses to overwrite an existing directory; model calls and the optional API
+runner are disclosed in the skill docs.
+
+After the current version is cleared or replaced, users can install the listing with the
+ClawHub/OpenClaw skill installer. Confirm the exact command shown by the current OpenClaw release
+before publishing instructions.
 
 ## Claude plugin directory
 
@@ -72,10 +84,14 @@ passing package validation.
 
 ## Skill indexes and personal listings
 
-The repository follows the Agent Skills layout, so users can install it with
-`npx skills add C-Kapsalis/value-pricing` or download the skill archive from a
-GitHub release. The skills.sh index is generated from public GitHub skill
-repositories; check its current rules before promoting a listing.
+The repository follows the Agent Skills layout. From OpenClaw, install the
+public ClawHub listing with `openclaw skills install @c-kapsalis/value-pricing`
+once the security review has cleared. For a local checkout, install
+`skills/value-pricing/` directly with `openclaw skills install <path> --as value-pricing`.
+Other Agent Skills clients can install with `npx skills add C-Kapsalis/value-pricing`
+or download the skill archive from a GitHub release. The skills.sh index is
+generated from public GitHub skill repositories; check its current rules before
+promoting a listing.
 
 The `.agents/plugins/marketplace.json` file exposes the plugin to Codex's
 repository marketplace. Users can add it with:

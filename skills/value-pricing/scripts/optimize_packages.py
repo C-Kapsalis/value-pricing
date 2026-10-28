@@ -33,7 +33,7 @@ from common import Study, read_summary, study_arg
 
 class PanelDemand:
     def __init__(self, st: Study, draws: int):
-        z = np.load(st.root / "panel/data/posteriors.npz", allow_pickle=True)
+        z = np.load(st.root / "panel/data/posteriors.npz", allow_pickle=False)
         b, self.cols, self.scale = z["b"], list(z["cols"]), float(z["scale"])
         self.b = b[np.linspace(0, len(b) - 1, min(draws, len(b))).astype(int)]
         self.P = len(self.cols)

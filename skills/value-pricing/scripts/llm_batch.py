@@ -7,7 +7,8 @@ optional system_prompt.txt. Writes responses/<rid>.json = {"rid", "response": <p
 
 Runners:
   cli  (default) `claude -p` on the user's Claude plan: no tools, no MCP, no settings, no session
-       persistence, a fixed system prompt; ANTHROPIC_API_KEY is stripped so no API spend happens.
+       persistence, a fixed system prompt, and a small allowlist of process environment variables; API keys
+       and unrelated environment variables are not passed to the CLI.
        Temperature is not settable here; the model default applies and is recorded.
   api  the Anthropic SDK with ANTHROPIC_API_KEY (only when the owner chose API spend); --temperature applies.
 A third route needs no runner: the orchestrating agent dispatches one subagent per prompt and writes
@@ -16,7 +17,8 @@ responses/<rid>.json itself in the same shape (costlier per call: the subagent's
 --free-text keeps replies that are not JSON (response = null, raw kept): the calibration needs this.
 
   llm_batch.py --study S --dir panel --workers 6 [--limit 20] [--expect choices,vw,gg] [--runner cli]
-Run long batches detached (setsid nohup ... &): a closed session or a tool timeout then can't kill them.
+Batches run in the foreground and resume from saved responses if re-run. Shell job control is an explicit
+owner choice; detached work continues using compute and may incur model charges after the session closes.
 """
 from __future__ import annotations
 
@@ -39,7 +41,8 @@ def parse(text: str):
 
 
 def call_cli(prompt, system, model):
-    env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")}
+    allowed_env = ("PATH", "HOME", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE", "TERM", "CLAUDE_CONFIG_DIR")
+    env = {k: os.environ[k] for k in allowed_env if k in os.environ}
     p = subprocess.run(["claude", "-p", "--model", model, "--output-format", "json", "--tools", "", "--system-prompt", system,
                         "--no-session-persistence", "--setting-sources", "", "--strict-mcp-config"],
                        input=prompt, capture_output=True, text=True, timeout=900, env=env, cwd="/tmp")

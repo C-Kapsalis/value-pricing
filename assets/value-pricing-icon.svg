@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Value Pricing</title>
+  <rect width="512" height="512" rx="112" fill="#102a43"/>
+  <path d="M256 95v254M162 143h188M210 143l-66 119h132l-66-119Zm92 0-66 119h132l-66-119Z" fill="none" stroke="#f0c36e" stroke-linecap="round" stroke-linejoin="round" stroke-width="20"/>
+  <path d="M185 389c18-35 42-52 71-52s53 17 71 52H185Z" fill="#f0c36e"/>
+  <circle cx="256" cy="91" r="22" fill="#f0c36e"/>
+</svg>

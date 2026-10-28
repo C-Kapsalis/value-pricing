@@ -1,0 +1,30 @@
+{
+  "name": "value-pricing",
+  "version": "0.1.0",
+  "description": "A value-based pricing workflow that triangulates market, cost and buyer value, then turns the evidence into testable package hypotheses.",
+  "author": {
+    "name": "Christoforos Kapsalis",
+    "url": "https://c-kapsalis.github.io/"
+  },
+  "homepage": "https://github.com/C-Kapsalis/value-pricing",
+  "repository": "https://github.com/C-Kapsalis/value-pricing",
+  "license": "MIT",
+  "keywords": ["pricing", "value-based pricing", "willingness to pay", "conjoint", "packaging"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Value Pricing",
+    "shortDescription": "Evidence-led pricing research",
+    "longDescription": "Run a structured pricing study for a product or service. The skill gathers feature evidence, compares competitor prices, models customer value and delivery costs, convenes a persona council, and proposes packages with a real-buyer validation plan. Simulated-buyer outputs are hypotheses, not demand forecasts or substitutes for customer research. Python analysis scripts need a local shell and Python 3.11 or later.",
+    "developerName": "Christoforos Kapsalis",
+    "category": "Productivity",
+    "capabilities": ["Instructions", "Pricing strategy", "Market research"],
+    "websiteURL": "https://github.com/C-Kapsalis/value-pricing",
+    "defaultPrompt": [
+      "Help me estimate a defensible price for this product.",
+      "Design three pricing tiers from our value drivers and costs.",
+      "What evidence do we need before we raise our prices?"
+    ],
+    "composerIcon": "./assets/value-pricing-icon.svg",
+    "logo": "./assets/value-pricing-icon.svg"
+  }
+}

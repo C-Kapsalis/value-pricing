@@ -1,0 +1,21 @@
+{
+  "name": "value-pricing",
+  "interface": {
+    "displayName": "Value Pricing"
+  },
+  "plugins": [
+    {
+      "name": "value-pricing",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/C-Kapsalis/value-pricing.git",
+        "ref": "main"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

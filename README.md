@@ -1,6 +1,9 @@
 # value-pricing
 
-A Claude Code plugin for a rigorous value-based pricing study of any product or service. Give it a
+[![GitHub stars](https://img.shields.io/github/stars/C-Kapsalis/value-pricing?style=flat-square&label=Stars)](https://github.com/C-Kapsalis/value-pricing/stargazers)
+[![Follow C-Kapsalis on GitHub](https://img.shields.io/github/followers/C-Kapsalis?style=flat-square&label=Follow%20C-Kapsalis)](https://github.com/C-Kapsalis)
+
+An open-source agent skill and plugin for a rigorous value-based pricing study of any product or service. Give it a
 website (and optionally an Obsidian vault, a docs folder, decks or past artifacts); it builds the
 capability vector with evidence, prices it from three sides, estimates each feature's added value,
 convenes a council of persona agents, runs a pre-registered simulated-buyer panel, interviews you about
@@ -37,11 +40,37 @@ It grew out of real pricing work; `references/lessons.md` records what that work
 
 ## Install
 
-As a plugin: unzip so that `value-pricing/` sits where your Claude Code loads plugins from (or add it
-through a local marketplace), then restart Claude Code.
+### Claude Code plugin
 
-As a bare skill: copy `skills/value-pricing/` to `~/.claude/skills/value-pricing/` and `agents/*.md` to
-`~/.claude/agents/`.
+Add the GitHub marketplace and install the plugin:
+
+```text
+/plugin marketplace add C-Kapsalis/value-pricing
+/plugin install value-pricing@value-pricing
+```
+
+You can also download `value-pricing-plugin.zip` from the
+[latest GitHub release](https://github.com/C-Kapsalis/value-pricing/releases/latest)
+and install it as a local plugin.
+
+### Codex or another Agent Skills client
+
+Install the skill from the public repository with:
+
+```sh
+npx skills add C-Kapsalis/value-pricing
+```
+
+Or download `value-pricing-skill.zip` from the
+[latest GitHub release](https://github.com/C-Kapsalis/value-pricing/releases/latest)
+and place the `value-pricing/` folder in that client's skills directory.
+Codex users can also add this repository marketplace with
+`codex plugin marketplace add C-Kapsalis/value-pricing` and install the
+Value Pricing plugin from the marketplace.
+
+ChatGPT and Codex public directory review uses the
+`value-pricing-openai.zip` archive; a public listing is available only after
+vendor review and publication.
 
 Python environment (once per machine):
 
@@ -74,3 +103,8 @@ meter table recovered the planted elasticity (0.73 vs 0.75), and the HB conjoint
 willingness to pay per level within a few euros. The crawler and corpus ingest were run on real material.
 A full live study (hundreds of LLM calls for feature coding and the panel) was not run as part of
 packaging.
+
+## Distribution
+
+See [PUBLISHING.md](PUBLISHING.md) for archive contents, release instructions,
+marketplace setup and vendor-directory submission steps.

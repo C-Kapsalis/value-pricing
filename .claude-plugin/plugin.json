@@ -2,6 +2,12 @@
   "name": "value-pricing",
   "version": "0.1.0",
   "description": "Rigorous value-based pricing for any product: crawl the website and knowledge base, estimate each feature's added value, price it from three sides (market, cost, value), convene a persona council and a pre-registered silicon panel, then optimise packages against your cost structure.",
-  "author": { "name": "Christoforos Kapsalis" },
+  "author": {
+    "name": "Christoforos Kapsalis",
+    "url": "https://c-kapsalis.github.io/"
+  },
+  "homepage": "https://github.com/C-Kapsalis/value-pricing",
+  "repository": "https://github.com/C-Kapsalis/value-pricing",
+  "license": "MIT",
   "keywords": ["pricing", "value-based pricing", "packaging", "willingness to pay", "conjoint", "hedonic regression", "van westendorp"]
 }

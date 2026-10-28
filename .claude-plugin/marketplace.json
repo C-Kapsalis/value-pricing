@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "value-pricing",
+  "description": "Value Pricing: a rigorous, evidence-led pricing study for products and services.",
+  "owner": {
+    "name": "Christoforos Kapsalis",
+    "url": "https://c-kapsalis.github.io/"
+  },
+  "plugins": [
+    {
+      "name": "value-pricing",
+      "description": "Triangulates market, cost and customer value to create testable pricing and package hypotheses.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

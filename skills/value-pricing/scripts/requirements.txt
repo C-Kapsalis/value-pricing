@@ -1,0 +1,17 @@
+numpy>=1.26
+pandas>=2.1
+pyarrow>=15
+scipy>=1.11
+scikit-learn>=1.4
+statsmodels>=0.14
+pyyaml>=6
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5
+# conjoint_fit.py (HB-MNL); without these it falls back to a conditional logit
+numpyro>=0.15
+jax>=0.4.30
+# optional: crawl_site.py --browser   (then: playwright install chromium)
+# playwright>=1.45
+# optional: llm_batch.py --runner api
+# anthropic>=0.40

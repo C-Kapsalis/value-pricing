@@ -2,6 +2,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/C-Kapsalis/value-pricing?style=flat-square&label=Stars)](https://github.com/C-Kapsalis/value-pricing/stargazers)
 [![Follow C-Kapsalis on GitHub](https://img.shields.io/github/followers/C-Kapsalis?style=flat-square&label=Follow%20C-Kapsalis)](https://github.com/C-Kapsalis)
+  [![skills.sh installs](https://skills.sh/b/C-Kapsalis/value-pricing)](https://skills.sh/C-Kapsalis/value-pricing)
 
 An open-source agent skill and plugin for a rigorous value-based pricing study of any product or service. Give it a
 website (and optionally an Obsidian vault, a docs folder, decks or past artifacts); it builds the

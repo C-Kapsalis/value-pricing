@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Value Pricing: Bayesian demand elasticity</title>
+  <desc id="desc">A conceptual price-response curve beside text about historical transactions, segment estimates, 90 percent credible intervals, and observational evidence. The curve is illustrative and contains no real data.</desc>
+  <rect width="1200" height="630" fill="#102a43"/>
+  <circle cx="71" cy="65" r="27" fill="#f0c36e"/>
+  <path d="M71 51v26M57 56h28M62 56l-9 15h18l-9-15Zm18 0-9 15h18l-9-15Z" fill="none" stroke="#102a43" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="114" y="75" fill="#f5f7f8" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700" letter-spacing="3">VALUE PRICING</text>
+  <text x="58" y="194" fill="#f5f7f8" font-family="Arial, Helvetica, sans-serif" font-size="61" font-weight="700">Bayesian demand</text>
+  <text x="58" y="268" fill="#f5f7f8" font-family="Arial, Helvetica, sans-serif" font-size="61" font-weight="700">elasticity</text>
+  <text x="61" y="337" fill="#c7d7e4" font-family="Arial, Helvetica, sans-serif" font-size="28">Historical transactions</text>
+  <text x="61" y="379" fill="#c7d7e4" font-family="Arial, Helvetica, sans-serif" font-size="28">Segment estimates</text>
+  <text x="61" y="421" fill="#c7d7e4" font-family="Arial, Helvetica, sans-serif" font-size="28">90% credible intervals</text>
+  <rect x="59" y="494" width="344" height="64" rx="32" fill="#f0c36e"/>
+  <text x="86" y="535" fill="#102a43" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700">Observational evidence</text>
+
+  <rect x="653" y="112" width="491" height="420" rx="25" fill="#193c58" stroke="#42627c" stroke-width="2"/>
+  <text x="691" y="164" fill="#f5f7f8" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="2">PRICE RESPONSE</text>
+  <text x="691" y="194" fill="#a9bfd0" font-family="Arial, Helvetica, sans-serif" font-size="17">Conceptual illustration</text>
+  <path d="M727 446V235M727 446h371" fill="none" stroke="#93abbc" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M749 274C839 292 920 340 1076 401L1076 437C920 388 839 339 749 325Z" fill="#f0c36e" opacity="0.21"/>
+  <path d="M749 298C841 313 935 373 1076 418" fill="none" stroke="#f0c36e" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="797" cy="311" r="9" fill="#f0c36e" stroke="#193c58" stroke-width="4"/>
+  <circle cx="910" cy="360" r="9" fill="#f0c36e" stroke="#193c58" stroke-width="4"/>
+  <circle cx="1034" cy="407" r="9" fill="#f0c36e" stroke="#193c58" stroke-width="4"/>
+  <text x="925" y="483" fill="#c7d7e4" font-family="Arial, Helvetica, sans-serif" font-size="19">Realised price →</text>
+  <text x="691" y="507" fill="#a9bfd0" font-family="Arial, Helvetica, sans-serif" font-size="15">Quantity per observed transaction</text>
+  <text x="62" y="605" fill="#8fa9bd" font-family="Arial, Helvetica, sans-serif" font-size="15">Open-source pricing research · github.com/C-Kapsalis/value-pricing</text>
+</svg>

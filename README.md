@@ -6,7 +6,8 @@
 
 An open-source agent skill and plugin for a rigorous value-based pricing study of any product or service. Give it a
 website (and optionally an Obsidian vault, a docs folder, decks or past artifacts); it builds the
-capability vector with evidence, prices it from three sides, estimates each feature's added value,
+capability vector with evidence, prices it from three sides, can analyze transaction-based demand
+responses as a separate evidence source, estimates each feature's added value,
 convenes a council of persona agents, runs a pre-registered simulated-buyer panel, interviews you about
 your cost structure, and scores packaging proposals on contribution after people time.
 
@@ -18,7 +19,7 @@ that validation.
 | Path | What |
 |---|---|
 | `skills/value-pricing/SKILL.md` | the orchestrator: ground rules, workspace, the seven phases with completion criteria |
-| `skills/value-pricing/references/` | one file per phase, plus `lessons.md`, `literature.md`, `output-contract.md` |
+| `skills/value-pricing/references/` | phase guides including optional Bayesian demand elasticity, plus `lessons.md`, `literature.md`, `output-contract.md` |
 | `skills/value-pricing/templates/` | `study.yaml`, `offering.yaml`, `taxonomy.yaml`, `value_drivers.yaml`, `costs.yaml`, `proposals.yaml`, `plans.csv`, `vendors.csv`, `preregistration.md`, `DECISIONS.md` |
 | `skills/value-pricing/scripts/` | the analysis code (Python 3.11+), each script with `--help` |
 | `agents/` | the council: `buyer-persona`, `pricing-strategist`, `cfo-unit-economics`, `behavioral-economist`, `competitive-analyst`, `gtm-sales-lead`, `devils-advocate` |
@@ -30,6 +31,7 @@ that validation.
 |---|---|---|
 | 1 Intake | `crawl_site.py`, `ingest_corpus.py` | `offering.yaml` with evidence, `taxonomy.yaml`, segments and archetypes ruled by the owner |
 | 2 Market | `crawl_site.py --vendors`, `code_features.py`, `llm_batch.py`, `kappa.py`, `hedonic.py`, `value_metric.py` | implied price per segment, market premium per feature, what rivals meter on |
+| 2b Demand behavior (optional) | `demand_elasticity.py` | Bayesian transaction-quantity price associations by product and segment, posterior intervals and diagnostics |
 | 3 Value | `value_mc.py` | EVC per segment, **per-feature added value** (share valued, Shapley share, leave-one-out), Sobol |
 | 4a Council | the agents | objections, fences, behavioural parameter ranges, verdicts per structure |
 | 4b Panel | `conjoint_design.py`, `panel_build.py`, `llm_batch.py`, `panel_analyze.py`, `conjoint_fit.py`, `calibration.py` | pre-registered conjoint WTP, Van Westendorp, Gabor-Granger, anchor effect, level-bias ratio |
@@ -38,6 +40,10 @@ that validation.
 | 7 Validation | — | real-buyer survey with decision rules fixed in advance; the owner's rulings |
 
 It grew out of real pricing work; `references/lessons.md` records what that work taught.
+Demand behavior uses historical transaction CSVs and remains observational unless a defensible
+identification design supports a causal interpretation. It describes quantity conditional on an
+observed transaction; it does not infer purchases that did not happen. Its estimates stay separate
+from competitor plan-meter elasticity.
 
 ## Install
 
@@ -97,11 +103,15 @@ worth to customers". The skill asks before every expensive step and every judgem
 
 `scripts/selftest.py` runs every analysis script on a synthetic study with planted ground truth (feature
 premia, a meter elasticity, simulated buyers with known willingness to pay) and prints PASS/FAIL per
-check. Run it once after installing: `.venv-pricing/bin/python <path>/scripts/selftest.py`.
+check. Run it once after installing: `.venv-pricing/bin/python <path>/scripts/selftest.py`. Add
+`--no-hb` to skip the optional HB conjoint fit while retaining the Bayesian demand recovery test.
 
 At packaging time the hedonic model recovered all three planted premia inside its 90% intervals, the
-meter table recovered the planted elasticity (0.73 vs 0.75), and the HB conjoint recovered the planted
-willingness to pay per level within a few euros. The crawler and corpus ingest were run on real material.
+meter table recovered the planted elasticity (0.73 vs 0.75), the HB conjoint recovered planted
+willingness to pay per level within a few euros, and the demand model recovered planted segment
+elasticities with zero divergences in its synthetic recovery check. The demand fixture uses synthetic
+Second Read Studio product and audience labels; its prices and quantities are invented test values, not
+customer data or observed product pricing. The crawler and corpus ingest were run on real material.
 A full live study (hundreds of LLM calls for feature coding and the panel) was not run as part of
 packaging.
 

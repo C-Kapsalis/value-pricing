@@ -1,6 +1,6 @@
 ---
 name: value-pricing
-description: Value-based pricing study for a product or service, from its website and knowledge base to a ratified price list. Use when someone wants to price or re-price an offering, design tiers or packages, estimate what each feature is worth to customers, or find willingness to pay. Triggers on "price my product", "what should we charge", "pricing tiers", "packaging", "willingness to pay", "value of each feature", "/value-pricing".
+description: Value-based pricing study for a product or service, from its website and knowledge base to a ratified price list. Use when someone wants to price or re-price an offering, design tiers or packages, estimate what each feature is worth to customers, analyze transaction-based demand response, or find willingness to pay. Demand estimates are observational unless a defensible causal design is supplied. Triggers on "price my product", "what should we charge", "pricing tiers", "packaging", "price elasticity from transactions", "willingness to pay", "value of each feature", "/value-pricing".
 ---
 
 # Value-based pricing
@@ -12,6 +12,7 @@ Price an offering from **three sides** and let the gaps between them do the argu
 | **Market** | What do rivals charge for this feature set? | hedonic regression over competitor plan cards | the **reference** price and each feature's market premium |
 | **Cost** | What does one more customer cost to serve? | cost-driver model + people time | the **floor**, and the volume needed to carry fixed cost |
 | **Value** | What is it worth to the buyer? | economic value to the customer (EVC) Monte Carlo + a pre-registered conjoint on a persona panel | the **ceiling**, and each feature's added value |
+| **Demand behavior (separate evidence)** | How does observed transaction quantity vary with realised price? | hierarchical Bayesian demand model on historical transactions | segment-level observational price associations and scenario responses; causal only with a defensible identification design |
 
 A **council** of persona agents (buyers per segment, plus pricing experts) argues the proposals; the
 synthesis scores them; the cost interview turns them into packages that make money; a real-buyer
@@ -19,11 +20,17 @@ validation plan says what would prove them wrong. The owner rules at every fork.
 
 Every number is a **hypothesis** until real buyers confirm it. Simulated buyers get direction right and
 level wrong; say so on every page that quotes them.
+Demand elasticity is separate from competitor listed-price meter elasticity. Transaction rows without
+zero-purchase periods estimate quantity conditional on an observed purchase, not purchase incidence or
+total market demand.
 
 ## Ground rules (every phase)
 
-- **Current prices are not inputs.** Never feed today's price list to any phase; it anchors the corridor
-  on a number nobody ratified. Compare against it at the end.
+- **The current list price is not a corridor input.** Do not feed today's price list to the market, cost,
+  or value phases; it anchors the corridor on a number nobody ratified. The optional demand phase is the
+  separate exception: it requires realised transaction prices from historical purchases to estimate
+  behavioral response, and its results do not set the corridor by themselves. Compare the current list
+  price against the finished corridor at the end.
 - **Unknown is `null` plus a stated gap,** never a plausible number. Every assumption is one sentence in
   the phase's `summary.json.assumptions`, so the owner can disagree with it.
 - **The owner rules.** Judgement calls (segment axis, crawl permission, archetypes, anchors, which proposal)
@@ -72,6 +79,10 @@ Each phase ends on a completion criterion. Read the phase's reference file when 
    → [`references/2-market.md`](references/2-market.md)
    Done when `market/results/summary.json` holds the implied price per segment (OLS, lasso and coverage
    neighbours), a premium per feature with its interval, κ per feature, and the meter table.
+2b. **Demand behavior (optional)** — import transactions and estimate Bayesian quantity-price associations.
+   → [`references/9-demand-elasticity.md`](references/9-demand-elasticity.md)
+   Done when diagnostics and price variation are reviewed, each product and segment has a posterior
+   estimate or explicit data gap, and observational identification limits are recorded.
 3. **Value** — value drivers, scenarios, Monte Carlo, per-feature added value, sensitivity.
    → [`references/3-value.md`](references/3-value.md)
    Done when every feature has a share of scenarios it valued, a median €, a Shapley share and a
@@ -99,6 +110,7 @@ Phases 2 and 3 can run in parallel; 5 can run any time before 6. The owner asked
 - [`references/lessons.md`](references/lessons.md) — what went wrong or surprised in the studies this
   method came from. Read it before phase 2 and again before phase 6.
 - [`references/output-contract.md`](references/output-contract.md) — the `summary.json` shape per phase.
+- [`references/9-demand-elasticity.md`](references/9-demand-elasticity.md) — transaction schema, model, diagnostics and identification limits.
 - [`references/literature.md`](references/literature.md) — the basis for each method. Verify a citation
   before it goes into a deck.
 - The council personas ship as this plugin's agents: `buyer-persona`, `pricing-strategist`,

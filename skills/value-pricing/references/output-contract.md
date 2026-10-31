@@ -9,7 +9,7 @@ The scripts write these keys; when a phase is done by hand, write them by hand.
 ## Common header
 
 ```json
-{"phase": "market|cost|value|panel|synthesis", "run_date": "YYYY-MM-DD", "currency": "EUR",
+{"phase": "market|cost|value|panel|demand|synthesis", "run_date": "YYYY-MM-DD", "currency": "EUR",
  "fx": {"USD": 0.0, "date": "YYYY-MM-DD"}, "git_sha": "... or null",
  "assumptions": ["each one a sentence a reviewer can disagree with"],
  "gaps": [{"what": "...", "why": "...", "blocked_on": "owner | data | null"}]}
@@ -68,7 +68,32 @@ The scripts write these keys; when a phase is done by hand, write them by hand.
 `preregistration`, `calibration`, `hypotheses` and `deviations` are written by hand after the scripts run;
 VW and Gabor-Granger live in `panel/results/{psm,gabor_granger,gabor_granger_binary}.csv`.
 
+## demand
+
+`demand_elasticity.py` writes transaction-based price response as a separate evidence source. This is not the competitor listed-price meter elasticity in `market.meters`.
+
+```json
+{"demand_elasticity": {
+  "status": "observational", "price_currency": "EUR", "input_validation": {"rows_received": 0, "rows_used": 0},
+  "model": "hierarchical zero-truncated negative-binomial ...", "interval": "90% posterior credible interval",
+  "identification": {"causal": false, "statement": "...", "price_endogeneity_risk": "..."},
+  "products": {"<product>": {
+    "status": "ok|insufficient_price_variation", "n_rows": 0,
+    "price_variation": {"n_unique_prices": 0, "log_price_sd": 0.0, "by_segment": {}},
+    "confounding_diagnostics": {"price_control_correlations": {}, "high_price_control_correlations": [], "standardized_predictor_condition_number": 0.0},
+    "diagnostics": {"rhat_max": 0.0, "ess_min": 0.0, "divergences": 0, "converged": true},
+    "model_fit": {"posterior_predictive_check": {"observed_mean": 0, "replicated_mean_ci90": [0, 0], "observed_p90_inside_rep_ci90": true}},
+    "estimates": [{"segment": "...", "elasticity": 0.0, "ci90": [0, 0],
+      "scenarios": [{"price_factor": 0.8, "expected_quantity": 0, "expected_quantity_ci90": [0, 0]}]}]
+  }}}
+}}
+```
+
+Only observed transaction rows are modelled. Unless zero-purchase periods and exposure are available, estimates describe transaction quantity conditional on purchase, not purchase incidence or total demand. Observational price associations are not causal absent a defensible identification design.
+
 ## synthesis
 
 `synthesis/data/corridor.csv`, `feature_value.csv`, `proposals_eval.csv`, `synthesis/results/packages.json`,
-and `synthesis/PROPOSALS.md`.
+and `synthesis/PROPOSALS.md`. When the demand phase ran, synthesis carries its dedicated
+`demand_elasticity` object and writes `synthesis/data/demand_elasticity.json`; this remains separate from
+the market meter results.

@@ -4,12 +4,13 @@
 Builds <dir> from templates/ (small settings), plants:
   market   260 vendors, log-price premia ad_platform_connectors +0.50, ai_prescriptive_insights +0.45,
            multi_touch_attribution +0.60; half the vendors scale on monthly_orders with elasticity 0.75
+  demand   synthetic Second Read Studio audience labels, transaction elasticity -0.80
   panel    simulated respondents with known WTP per level (no LLM calls)
-then runs value_mc, kappa, hedonic, value_metric, cost_model, conjoint_design, panel_build,
-panel_analyze, conjoint_fit (fallback, and HB unless --no-hb), synthesize, optimize_packages, and
-reports PASS/FAIL per check. Takes 5–20 minutes depending on the machine (HB is most of it).
+then runs value_mc, kappa, hedonic, value_metric, demand_elasticity, cost_model, conjoint_design,
+panel_build, panel_analyze, conjoint_fit (fallback, and HB unless --no-hb), synthesize,
+optimize_packages, and reports PASS/FAIL per check. Takes 5–20 minutes depending on the machine (HB is most of it).
 
-  selftest.py [--dir /tmp/value-pricing-selftest] [--no-hb]
+  selftest.py [--dir NEW_DIRECTORY] [--no-hb]
 """
 from __future__ import annotations
 
@@ -19,11 +20,14 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import yaml
+
+from demand_elasticity import fit_product, load_transactions, price_variation_diagnostics
 
 HERE = Path(__file__).resolve().parent
 TPL = HERE.parent / "templates"
@@ -41,9 +45,7 @@ def run(T, script, *args):
 
 
 def build(T: Path):
-    if T.exists():
-        shutil.rmtree(T)
-    (T / "synthesis").mkdir(parents=True)
+    (T / "synthesis").mkdir(parents=True, exist_ok=True)
     for f in ("study.yaml", "value_drivers.yaml", "taxonomy.yaml", "costs.yaml"):
         shutil.copy(TPL / f, T / f)
     shutil.copy(TPL / "proposals.yaml", T / "synthesis/proposals.yaml")
@@ -100,12 +102,51 @@ def simulate_panel(T: Path):
         (T / f"panel/responses/{r.rid}.json").write_text(json.dumps({"rid": r.rid, "response": body, "raw": "simulated", "meta": {}}))
 
 
+def simulate_transactions(T: Path):
+    rng = np.random.default_rng(51)
+    rows = []
+    # Entirely synthetic Second Read Studio example: these audience labels come
+    # from its product brief; prices and quantities are planted test values.
+    for segment, n_customers in (("technical_writers", 36), ("product_marketers", 36)):
+        for customer_i in range(n_customers):
+            customer = f"{segment}-{customer_i}"
+            cust_effect = rng.normal(0, 0.25)
+            for month in range(1, 13):
+                date = pd.Timestamp(2025, month, 15)
+                price = rng.choice([5.0, 7.0, 9.0, 12.0, 16.0, 22.0]) * rng.lognormal(0, 0.05)
+                promo = int(rng.random() < 0.2)
+                mu = np.exp(3.1 + cust_effect - 0.8 * np.log(price / 11)
+                            + 0.25 * promo + 0.15 * np.sin(2 * np.pi * (month - 1) / 12))
+                lam = rng.gamma(shape=4.0, scale=mu / 4.0)
+                rows.append({"date": date, "product": "second_read_studio_synthetic", "customer": customer,
+                             "segment": segment, "realised_unit_price": price,
+                             "quantity": max(1, rng.poisson(lam)), "promotion": promo,
+                             "channel": "online" if customer_i % 2 else "sales",
+                             "contract_duration": 12 if customer_i % 3 else 1})
+    d = pd.DataFrame(rows)
+    (T / "demand/data").mkdir(parents=True, exist_ok=True)
+    d.to_csv(T / "demand/data/transactions.csv", index=False)
+    # Bad rows exercise validation and are excluded from estimation.
+    bad = d.iloc[[0, 1]].copy()
+    bad["date"] = bad["date"].astype("string")
+    bad.loc[bad.index[0], "realised_unit_price"] = 0
+    bad.loc[bad.index[1], "date"] = "not-a-date"
+    pd.concat([d, bad], ignore_index=True).to_csv(T / "demand/data/transactions_with_bad_rows.csv", index=False)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--dir", default="/tmp/value-pricing-selftest")
+    ap.add_argument("--dir", help="new output directory; must not already exist")
     ap.add_argument("--no-hb", action="store_true")
     a = ap.parse_args()
-    T = Path(a.dir)
+    if a.dir:
+        T = Path(a.dir).expanduser().resolve()
+        try:
+            T.mkdir(parents=True, exist_ok=False)
+        except FileExistsError:
+            ap.error(f"--dir already exists; choose a new empty path to protect its contents: {T}")
+    else:
+        T = Path(tempfile.mkdtemp(prefix="value-pricing-selftest-"))
     os.environ.setdefault("OMP_NUM_THREADS", "2")
     build(T)
     checks = []
@@ -122,6 +163,33 @@ def main():
     run(T, "value_metric.py", "--boot", "500")
     m = {r["axis"]: r for r in json.loads((T / "market/results/summary.json").read_text())["meters"]}["monthly_orders"]
     checks.append((f"market: orders elasticity {m['elasticity']:.2f} within 0.05 of planted {ELASTICITY}", abs(m["elasticity"] - ELASTICITY) < 0.05))
+    simulate_transactions(T)
+    tx, tx_counts = load_transactions(T / "demand/data/transactions_with_bad_rows.csv")
+    checks.append(("demand: malformed and non-positive transaction rows are counted and dropped",
+                   len(tx) == 36 * 12 * 2 and tx_counts["rows_dropped_missing_or_invalid"] == 2))
+    low_variation = tx.copy()
+    low_variation["realised_unit_price"] = 10.0
+    edge = fit_product(low_variation, warmup=10, samples=10, chains=1, seed=19)
+    checks.append(("demand: insufficient price variation blocks estimation", edge["status"] == "insufficient_price_variation"))
+    segment_edge = tx.copy()
+    segment_edge.loc[segment_edge.segment == "product_marketers", "realised_unit_price"] = 10.0
+    seg_support = price_variation_diagnostics(segment_edge)
+    checks.append(("demand: segment-specific price support flags a flat segment",
+                   seg_support["n_unique_prices"] >= 3 and
+                   seg_support["by_segment"]["product_marketers"]["n_unique_prices"] == 1))
+    run(T, "demand_elasticity.py", "--warmup", "400", "--samples", "800", "--chains", "2")
+    ds = json.loads((T / "demand/results/summary.json").read_text())["demand_elasticity"]["products"]["second_read_studio_synthetic"]
+    est = {e["segment"]: e for e in ds["estimates"]}
+    recovery = all(e["ci90"][0] <= -0.8 <= e["ci90"][1] and abs(e["elasticity"] + 0.8) < 0.35 for e in est.values())
+    checks.append(("demand: segment elasticities recover planted -0.80 and 90% intervals cover it", recovery))
+    checks.append(("demand: NUTS convergence diagnostics pass", ds["diagnostics"]["converged"]))
+    demand_summary = json.loads((T / "demand/results/summary.json").read_text())["demand_elasticity"]
+    checks.append(("demand: results are explicitly observational", demand_summary["identification"]["causal"] is False))
+    ppc = ds["model_fit"]["posterior_predictive_check"]
+    checks.append(("demand: posterior predictive mean and p90 cover synthetic observations",
+                   ppc["observed_mean_inside_rep_ci90"] and ppc["observed_p90_inside_rep_ci90"]))
+    checks.append(("demand: a 20% price increase reduces predicted transaction quantity",
+                   all(e["scenarios"][2]["expected_quantity"] < e["scenarios"][1]["expected_quantity"] for e in est.values())))
     run(T, "cost_model.py")
     run(T, "conjoint_design.py", "--starts", "1")
     run(T, "panel_build.py")
@@ -136,6 +204,10 @@ def main():
     run(T, "synthesize.py")
     fvt = pd.read_csv(T / "synthesis/data/feature_value.csv").set_index("feature_id")
     checks.append(("synthesis: multi_touch_attribution (ours: no, planted premium) classed roadmap", fvt.loc["multi_touch_attribution", "class"] == "roadmap"))
+    sy = json.loads((T / "synthesis/results/summary.json").read_text())
+    checks.append(("synthesis: demand elasticity remains a separate evidence source",
+                   sy["demand_elasticity"]["identification"]["causal"] is False and
+                   (T / "synthesis/data/demand_elasticity.json").exists()))
     run(T, "optimize_packages.py")
     pe = pd.read_csv(T / "synthesis/data/proposals_eval.csv")
     checks.append(("packages: every proposal scored under every lens", pe.groupby("proposal").lens.nunique().min() == pe.lens.nunique()))

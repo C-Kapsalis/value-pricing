@@ -21,7 +21,7 @@ The script writes four archives to the ignored `dist/` directory:
 | `value-pricing-codex.zip` | Codex plugin bundle for manual/local installation. |
 | `value-pricing-openai.zip` | Portable, skills-only package for the ChatGPT/Codex public plugin directory review flow. |
 
-Archives contain source and sample templates only. They do not include a
+Archives contain source and blank, configurable templates only. They do not include a
 customer study, credentials, browser profile, or generated research data. The
 analysis scripts need Python 3.11 or later; install the requirements file in a
 virtual environment. Browser crawling may additionally require Playwright and

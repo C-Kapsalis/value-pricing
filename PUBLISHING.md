@@ -103,3 +103,11 @@ codex plugin marketplace add C-Kapsalis/value-pricing
 The `.claude-plugin/marketplace.json` file exposes the Claude Code plugin to
 Claude Code's marketplace command. These GitHub-backed marketplaces are
 separate from vendor-reviewed public directories.
+
+## After a history rewrite
+
+When repository history is rewritten to remove sensitive material, users should
+clone the canonical repository again. Do not merge, pull from, or push old local
+branches or tags; they can reintroduce the removed history. Maintainers cannot
+erase independent forks, downloaded archives, or cached copies. Release assets
+attached to old tags need separate replacement or removal.

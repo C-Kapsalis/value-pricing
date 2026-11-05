@@ -1,0 +1,13 @@
+{
+  "name": "value-pricing",
+  "version": "0.1.1",
+  "description": "Configurable, evidence-led pricing research for products, services, and other business models. Select methods to fit the decision, market, inputs, and constraints; document pricing hypotheses and validation needs.",
+  "author": {
+    "name": "Christoforos Kapsalis",
+    "url": "https://c-kapsalis.github.io/"
+  },
+  "homepage": "https://github.com/C-Kapsalis/value-pricing",
+  "repository": "https://github.com/C-Kapsalis/value-pricing",
+  "license": "MIT",
+  "keywords": ["pricing", "value-based pricing", "packaging", "willingness to pay", "conjoint", "hedonic regression", "van westendorp"]
+}

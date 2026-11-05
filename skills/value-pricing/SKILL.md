@@ -34,7 +34,6 @@ Possible methods include:
 - offering or attribute comparison, when meaningful attributes can be observed;
 - Economic Value to the Customer (EVC) and value-driver scenarios;
 - cost-to-serve, contribution, and margin analysis;
-- observed transaction analysis, when suitable price and quantity records exist; interpret ordinary historical data as association, not causation or purchase incidence;
 - qualitative interviews, price sensitivity questions, Van Westendorp, or Gabor-Granger;
 - choice-based conjoint when buyers face realistic trade-offs among configurable attributes;
 - simulated buyer research for exploration and question development;
@@ -82,8 +81,6 @@ Python scripts are in `scripts/` and accept `--help`. Create an isolated environ
 5. **Delivery economics (optional):** estimate relevant variable, fixed, labor, channel, fulfillment, support, and other cost drivers from evidence. Keep gaps visible.
 6. **Synthesis:** compare evidence and uncertainty, explain conflicts, and produce conditional pricing or packaging hypotheses only if the evidence supports them.
 7. **Validation and handover:** propose a real-customer or market test, with decision criteria, risks, and unresolved assumptions.
-
-The optional `demand_elasticity.py` script expects historical transaction rows with date, product, customer, segment, realized unit price, and quantity. It models quantity among observed transactions. It cannot estimate purchase incidence from transaction-only data, and non-experimental price variation does not establish causality.
 
 Phases can be skipped, reordered, or scoped down. A study can end with an evidence gap or a recommendation to collect data rather than a price.
 

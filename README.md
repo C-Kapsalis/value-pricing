@@ -15,7 +15,7 @@ The skill helps a team:
 - design optional price sensitivity, choice or scenario research;
 - turn evidence into pricing hypotheses, risks and a real-customer validation plan.
 
-Methods can include competitor research, offering comparisons, Economic Value to the Customer (EVC), value-driver scenarios, cost and contribution analysis, Van Westendorp, Gabor-Granger, choice-based conjoint, simulated buyer research, and interviews or tests with real customers. The workflow does not require every method. Each selected method should state its inputs, rationale and limitations. Do not substitute invented inputs when evidence is unavailable.
+Methods can include competitor research, offering comparisons, Economic Value to the Customer (EVC), value-driver scenarios, cost and contribution analysis, price sensitivity, Van Westendorp, Gabor-Granger, choice-based conjoint, analysis of observed transactions, simulated buyer research, and interviews or tests with real customers. The workflow does not require every method. Each selected method should state its inputs, rationale and limitations. Do not substitute invented inputs when evidence is unavailable.
 
 ## Who can use it
 
@@ -83,7 +83,7 @@ Invoke `/value-pricing [offering context] [source paths…]` or ask, “Help me 
 
 ## Limitations
 
-Market listings may be incomplete or incomparable. Models depend on evidence and assumptions, and extrapolation beyond observed data is uncertain. The included analysis scripts implement specific structured methods and may assume a particular data shape, feature comparison, or billing basis; use them only when those assumptions fit, and use a suitable manual analysis otherwise. Simulated buyers are exploratory and are not a substitute for representative human research or observed purchasing behavior. Cost models depend on complete cost-to-serve inputs. Treat estimates as hypotheses, report uncertainty, and validate material decisions with relevant customers and business data.
+Market listings may be incomplete or incomparable. Models depend on evidence and assumptions, and extrapolation beyond observed data is uncertain. The included analysis scripts implement specific structured methods and may assume a particular data shape, attribute comparison, or billing basis; use them only when those assumptions fit, and use a suitable manual analysis otherwise. The transaction model estimates quantity conditional on observed purchases; ordinary historical transactions support observational associations, not causal effects or purchase incidence. Simulated buyers are exploratory and are not a substitute for representative human research or observed purchasing behavior. Cost models depend on complete cost-to-serve inputs. Treat estimates as hypotheses, report uncertainty, and validate material decisions with relevant customers and business data.
 
 ## Licence
 

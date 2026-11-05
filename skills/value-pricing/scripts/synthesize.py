@@ -30,6 +30,7 @@ def main():
     a = ap.parse_args()
     st = Study(a.study)
     M, C, V, Pn = ((read_summary(st, p) or {}) for p in ("market", "cost", "value", "panel"))
+    D = read_summary(st, "demand") or {}
     psm_p = st.root / "panel/results/psm.csv"
     psm = pd.read_csv(psm_p) if psm_p.exists() else None
     missing = [p for p, s in (("market", M), ("cost", C), ("value", V), ("panel", Pn)) if not s]
@@ -106,7 +107,20 @@ def main():
                     "leave_one_out_eur_mean": v.get("leave_one_out_eur_mean"), "is_gate": gate, "class": cls})
     fvt = pd.DataFrame(out).sort_values(["class", "shapley_share"], ascending=[True, False])
     fvt.to_csv(st.path("synthesis", "data", "feature_value.csv"), index=False)
+    # Keep actual-purchase evidence in its own deliverable. It answers a different
+    # question from competitor list-price meter elasticity and must not overwrite it.
+    demand = D.get("demand_elasticity")
+    demand_rows = []
+    if demand:
+        for product, result in demand.get("products", {}).items():
+            for estimate in result.get("estimates", []):
+                demand_rows.append({"product": product, **estimate,
+                                    "model_status": result.get("status"),
+                                    "diagnostics": result.get("diagnostics"),
+                                    "identification": demand.get("identification")})
+    pd.DataFrame(demand_rows).to_json(st.path("synthesis", "data", "demand_elasticity.json"), orient="records", indent=2)
     write_summary(st, "synthesis", {"corridor": cor.to_dict("records"), "feature_value": out,
+                                    "demand_elasticity": demand,
                                     "thresholds": {"margin": a.margin, "premium": a.premium, "valued": a.valued, "shapley": a.shapley}},
                   ["Floor = variable + people + channel cost at the target margin; reference = market implied-price band; ceiling = EVC × 10–30% capture."],
                   [{"what": f"{p} phase", "why": "no summary.json", "blocked_on": None} for p in missing])

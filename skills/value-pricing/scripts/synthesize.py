@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 6 · price corridor per segment and the feature-value table, from the phase summaries.
 
 Corridor (per segment, money per month):

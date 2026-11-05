@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 4b · panel responses → exclusions, long choices, Van Westendorp, Gabor-Granger.
 
 Exclusion rules (the pre-registration's §6), applied mechanically:

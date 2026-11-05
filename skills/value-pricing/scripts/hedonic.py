@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 2 · hedonic model of the market and the implied price of our feature vector, per segment.
 
 Inputs (under <study>/market/data/):
@@ -180,6 +179,14 @@ def main():
     ours = {f["id"]: status(f.get("ours", "no")) for f in tax["features"]}
     vendors = pd.read_csv(D / "vendors.csv").set_index("vendor")
     feats = pd.read_csv(D / "vendor_features.csv").set_index("vendor")
+    unresolved = feats.reindex(vendors.index.drop("__ours__", errors="ignore")).reindex(columns=fids).isna()
+    if unresolved.any(axis=None):
+        n_rows = int(unresolved.any(axis=1).sum())
+        n_cells = int(unresolved.sum().sum())
+        raise SystemExit(
+            f"{n_cells} competitor feature codings are unclear or missing across {n_rows} vendors. "
+            "Resolve those cells from source evidence before fitting; unknown is not absence."
+        )
     if (D / "reference_prices.csv").exists():
         ref = pd.read_csv(D / "reference_prices.csv").set_index("vendor")
     else:

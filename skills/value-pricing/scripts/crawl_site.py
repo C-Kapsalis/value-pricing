@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Polite crawler: a product's own site (phase 1) or competitors' pricing pages (phase 2) → markdown.
 
 Conduct: robots.txt honoured, an identifying user agent with a contact, >= --delay seconds between
@@ -29,6 +28,11 @@ from urllib.parse import urldefrag, urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    sync_playwright = None
+
 from common import Study, study_arg
 
 UA = "value-pricing-research/0.1 (pricing study; contact: {contact})"
@@ -57,7 +61,8 @@ class Fetcher:
         self.browser = None
         self.origin = None
         if browser:
-            from playwright.sync_api import sync_playwright
+            if sync_playwright is None:
+                raise RuntimeError("install the optional playwright package and Chromium to use --browser")
             self._pw = sync_playwright().start()
             self.browser = self._pw.chromium.launch()
 
@@ -84,10 +89,18 @@ class Fetcher:
         return bool(addresses) and all(address.is_global for address in addresses)
 
     def _guard_route(self, route):
-        if self.safe_url(route.request.url):
+        if self.allowed(route.request.url):
+            self._wait_for_host()
             route.continue_()
         else:
             route.abort("blockedbyclient")
+
+    def _wait_for_host(self):
+        host = self.origin[1]
+        wait = self.delay - (time.time() - self.last.get(host, 0))
+        if wait > 0:
+            time.sleep(wait)
+        self.last[host] = time.time()
 
     def allowed(self, url: str) -> bool:
         if not self.safe_url(url):
@@ -96,12 +109,16 @@ class Fetcher:
         host = f"{self.origin[0]}://{hostname}:{self.origin[2]}"
         if host not in self.robots:
             rp = robotparser.RobotFileParser()
-            code, body = self.get(host + "/robots.txt")
-            if code == 200:
-                rp.parse(body.splitlines())
-            elif code in (404, 410):
-                rp.parse([])
-            else:
+            try:
+                self._wait_for_host()
+                response = self.s.get(host + "/robots.txt", timeout=15, allow_redirects=False)
+                if response.status_code == 200:
+                    rp.parse(response.text.splitlines())
+                elif response.status_code in (404, 410):
+                    rp.parse([])
+                else:
+                    rp.parse(["User-agent: *", "Disallow: /"])
+            except requests.RequestException:
                 rp.parse(["User-agent: *", "Disallow: /"])
             self.robots[host] = rp
         return self.robots[host].can_fetch(self.s.headers["User-Agent"], url)
@@ -111,10 +128,7 @@ class Fetcher:
             return 0, "blocked non-public or cross-origin URL"
         current, redirects = url, 0
         for attempt in range(4):
-            wait = self.delay - (time.time() - self.last.get(self.origin[1], 0))
-            if wait > 0:
-                time.sleep(wait)
-            self.last[self.origin[1]] = time.time()
+            self._wait_for_host()
             try:
                 if self.browser:
                     pg = self.browser.new_page(user_agent=self.s.headers["User-Agent"])
@@ -132,8 +146,8 @@ class Fetcher:
                     if 300 <= code < 400 and r.headers.get("Location"):
                         target = urljoin(current, r.headers["Location"])
                         redirects += 1
-                        if redirects > 5 or not self.safe_url(target):
-                            return 0, "blocked cross-origin or non-public redirect"
+                        if redirects > 5 or not self.allowed(target):
+                            return 0, "blocked redirect by origin or robots policy"
                         current = target
                         continue
                     html = r.text

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 4b · hierarchical Bayes MNL on the panel's choices → WTP per level, reservation price, posteriors.
 
 Preference space (the pre-registered primary):
@@ -41,7 +40,7 @@ class Data:
         des = pd.read_csv(st.root / "panel/design.csv")
         self.T = int(des[des.task_type == "random"].task.max())
         self.A = int(des.alt.max())
-        self.lv = {(int(r.version), int(r.task), int(r.alt)): r for r in des.itertuples()}
+        self.lv = {(int(r.version), int(r.task), int(r.alt)): r._asdict() for r in des.itertuples()}
 
     def x_of(self, levels: dict):
         v = np.zeros(self.P)
@@ -53,7 +52,7 @@ class Data:
 
     def alt(self, version, task, alt):
         r = self.lv[(0 if task > self.T else int(version), int(task), alt)]
-        return self.x_of({a: getattr(r, f"{a}_lvl") for a in self.nonprice}), self.prices[r.price_lvl]
+        return self.x_of({a: r[f"{a}_lvl"] for a in self.nonprice}), self.prices[r["price_lvl"]]
 
     def build(self, ch: pd.DataFrame):
         est = ch[ch.task_id <= self.T]

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Estimate segment-level transaction quantity price elasticities with a Bayesian model.
 
 Input is a CSV with date, product, customer, segment, realised_unit_price, and

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 6 · score and tune packaging proposals on CONTRIBUTION after people time, under every level lens.
 
 Reads synthesis/proposals.yaml (templates/proposals.yaml), cost/results/summary.json, and whichever

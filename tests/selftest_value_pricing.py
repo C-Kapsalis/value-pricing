@@ -27,10 +27,13 @@ import numpy as np
 import pandas as pd
 import yaml
 
+ROOT = Path(__file__).resolve().parents[1]
+HERE = ROOT / "skills" / "value-pricing" / "scripts"
+TPL = HERE.parent / "templates"
+sys.path.insert(0, str(HERE))
+
 from demand_elasticity import fit_product, load_transactions, price_variation_diagnostics
 
-HERE = Path(__file__).resolve().parent
-TPL = HERE.parent / "templates"
 PLANTED = {"delivery_scope": 0.5, "service_quality": 0.45, "outcome_measurement": 0.6}
 ELASTICITY = 0.75
 PANEL_WTP = {"access_level": 25, "service_level": 30, "onboarding": 8, "support": 5}

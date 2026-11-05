@@ -67,7 +67,7 @@ uv venv .venv-pricing
 uv pip install --python .venv-pricing/bin/python -r <path>/skills/value-pricing/scripts/requirements.txt
 ```
 
-For JavaScript-heavy sites, install Playwright and its Chromium browser as described in the skill documentation. Some optional language-model workflows use a locally available `claude` command; an API runner is an explicit alternative. Review data-handling notes before sending any business-derived material to a model provider.
+For JavaScript-heavy sites, install Playwright and its Chromium browser as described in the skill documentation. The optional language-model runner sends selected prompts and included study text to Anthropic only when invoked with `--confirm-external-transfer`. Review and minimize the specific data before approving transfer; all other workflow steps can run without a model provider.
 
 ## Run
 

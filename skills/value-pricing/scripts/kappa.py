@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 2 · inter-rater agreement per feature (Cohen's κ) between two codings of the same vendors.
 
   kappa.py --study S [--a market/data/vendor_features.csv] [--b market/data/vendor_features2.csv]
@@ -33,17 +32,21 @@ def main():
     B = pd.read_csv(st.root / x.b).set_index("vendor")
     common = A.index.intersection(B.index)
     rows = []
-    for f in [c for c in A.columns if not c.endswith("__unclear") and c in B.columns]:
-        a, b = A.loc[common, f].astype(int), B.loc[common, f].astype(int)
+    features = [c for c in A.columns if not c.endswith(("__unclear", "__missing")) and c in B.columns]
+    for f in features:
+        pair = pd.concat([A.loc[common, f].rename("a"), B.loc[common, f].rename("b")], axis=1).dropna()
+        a, b = pair["a"].astype(int), pair["b"].astype(int)
         k = cohen(a, b)
         agree, prev = float((a == b).mean()), max(a.mean(), b.mean())
         low = k != k or k < x.threshold
-        rows.append({"feature_id": f, "n": len(common), "agreement": round(agree, 3), "kappa": round(k, 3) if k == k else None,
+        rows.append({"feature_id": f, "n": len(pair), "n_unresolved": int(len(common) - len(pair)),
+                     "agreement": round(agree, 3) if len(pair) else None,
+                     "kappa": round(k, 3) if k == k else None,
                      "prevalence_a": round(a.mean(), 3), "prevalence_b": round(b.mean(), 3),
                      "drop": bool(low), "rare_artefact": bool(low and agree >= 0.9 and prev <= 0.05)})
     df = pd.DataFrame(rows).sort_values("kappa")
     df.to_csv(st.path("market", "data", "kappa.csv"), index=False)
-    print(f"{len(common)} vendors double-coded; median κ {df.kappa.median():.2f}; dropped {int(df['drop'].sum())} of {len(df)}")
+    print(f"{len(common)} vendors overlap; median κ {df.kappa.median():.2f}; dropped {int(df['drop'].sum())} of {len(df)}")
     if df["drop"].any():
         print(df[df["drop"]].to_string(index=False))
 

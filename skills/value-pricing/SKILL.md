@@ -1,6 +1,15 @@
 ---
 name: value-pricing
 description: Evidence-led pricing research for products, services, and other offerings. Use when someone needs to investigate a pricing decision, pricing structure, value metric, or customer evidence. Supports configurable business models, units, segments, and methods; outputs hypotheses and validation plans, not guaranteed prices.
+version: 0.1.3
+metadata:
+  openclaw:
+    requires:
+      bins: [python3]
+    envVars:
+      - name: ANTHROPIC_API_KEY
+        required: false
+        description: Used only by the optional Anthropic API runner after explicit transfer confirmation.
 ---
 
 # Value Pricing
@@ -46,12 +55,22 @@ Do not infer a business model, unit, segment, attribute, cost, sample, or result
 
 - Treat listed prices as dated market references, not verified transaction prices. Record currency, billing unit, period, scope, conditions, and source.
 - Separate observations, estimates, and assumptions. Unknown is `null` plus a stated gap, never a plausible invented number.
+- Population-weighted scripts require explicit evidence-based segment and archetype shares. They stop when shares are missing instead of filling in equal weights.
 - Keep business-derived inputs private in the study workspace. Minimize personal or confidential data before any external model call and disclose the provider receiving prompts.
 - User judgment governs scope, research choices, interpretation, and decisions. Present consequential assumptions and trade-offs clearly.
 - Read-only against production systems. Store raw source material and research records outside version control.
 - Do not promise an optimal price or actual willingness-to-pay prediction. Every model output is conditional on its data and assumptions.
 - Loading the skill does not start scripts, crawls, or model calls. Run scripts only when explicitly invoked. Before an expensive step, explain its expected resource use and obtain the user's go-ahead.
+- Never transfer prompts, source text, or study data to a model provider unless the user has reviewed the specific data and explicitly approved that transfer.
 - Use one currency and a clearly specified billing unit and period within each monetary analysis. Do not assume monthly billing.
+
+## Permissions and data handling
+
+- This skill declares no MCP servers or tools and does not run automatically. Its scripts run only when explicitly invoked by the user or agent.
+- Local file access is limited to the configured study directory. `ingest_corpus.py` recursively reads only paths explicitly supplied with `--path`; outputs are written under the study directory. It does not search the home directory or upload files.
+- `crawl_site.py` makes network requests only when explicitly run. It stays on the selected public origin, checks that origin's `robots.txt`, rate-limits browser and HTTP requests, and fails closed when the robots policy cannot be read. It does not transmit local study files.
+- `llm_batch.py` sends the selected prompt files and their included source text to Anthropic's API only when run with `--confirm-external-transfer`. The API key is read by the Anthropic SDK for that request; the skill does not enumerate environment variables. Review and minimize study data first.
+- No script launches a shell command or executes downloaded code. PDF text extraction uses the local Python `pypdf` library.
 
 ## Configure a study
 
@@ -71,7 +90,7 @@ pricing-study/
   market/ cost/ value/ panel/ synthesis/   outputs for selected phases
 ```
 
-Python scripts are in `scripts/` and accept `--help`. Create an isolated environment and install `scripts/requirements.txt` only when a selected method needs the scripts. Some optional model-assisted steps require a locally available `claude` command or an explicitly selected API runner. Check data handling, costs, and provider terms before use.
+Python scripts are in `scripts/`; invoke them as `python scripts/<name>.py --help`. Create an isolated environment and install `scripts/requirements.txt` only when a selected method needs the scripts. The optional model runner sends data to Anthropic only after the explicit transfer flag; the main workflow can also be run without any model provider.
 
 ## Workflow
 

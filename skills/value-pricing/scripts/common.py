@@ -4,8 +4,8 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import math
 import operator
-import subprocess
 from datetime import date
 from pathlib import Path
 
@@ -45,13 +45,40 @@ class Study:
         return yaml.safe_load(p.read_text())
 
     def segment_share(self) -> dict:
-        s = {b["id"]: float(b.get("share") or 0) for b in self.bands}
-        tot = sum(s.values())
-        return {k: (v / tot if tot else 1 / len(s)) for k, v in s.items()}
+        if not self.bands:
+            raise ValueError("configure segment bands and evidence-based shares before using this method")
+        s = {}
+        for band in self.bands:
+            key = band["id"]
+            if band.get("share") is None:
+                raise ValueError(f"segment {key!r} has no share; supply evidence-based shares before analysis")
+            value = float(band["share"])
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(f"segment share for {key!r} must be a finite, non-negative number")
+            s[key] = value
+        total = sum(s.values())
+        if total <= 0:
+            raise ValueError("segment shares must sum to a positive value")
+        return {key: value / total for key, value in s.items()}
 
     def archetype_share(self, seg: str) -> dict:
-        raw = {a["id"]: float(per_seg(a.get("share", 1.0), seg)) for a in self.archetypes}
-        tot = sum(raw.values()) or 1.0
+        if not self.archetypes:
+            raise ValueError("configure evidence-based archetypes and shares before using this method")
+        raw = {}
+        for archetype in self.archetypes:
+            key = archetype["id"]
+            if "share" not in archetype or archetype["share"] is None:
+                raise ValueError(f"archetype {key!r} has no share; supply evidence-based shares before analysis")
+            try:
+                value = float(per_seg(archetype["share"], seg))
+            except KeyError as exc:
+                raise ValueError(f"{exc}; configure a share for every archetype in segment {seg!r}") from exc
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(f"archetype share for {key!r} in segment {seg!r} must be finite and non-negative")
+            raw[key] = value
+        tot = sum(raw.values())
+        if tot <= 0:
+            raise ValueError(f"archetype shares for segment {seg!r} must sum to a positive value")
         return {k: v / tot for k, v in raw.items()}
 
 
@@ -138,14 +165,14 @@ def _expression_node(node, ns):
         if node.value.id == "np" and node.attr in _SAFE_NUMPY:
             return _SAFE_NUMPY[node.attr]
         if node.value.id == "rng" and node.attr in _SAFE_RNG and "rng" in ns:
-            return getattr(ns["rng"], node.attr)
+            return lambda *args: ns["rng"].lognormal(*args)
     if isinstance(node, ast.Name) and node.id in _SAFE_FUNCTIONS:
         return _SAFE_FUNCTIONS[node.id]
     raise ValueError(f"unsupported syntax in value expression: {type(node).__name__}")
 
 
-def eval_expr(expr, ns: dict):
-    """Evaluate the small arithmetic/NumPy expression language used by study YAML."""
+def evaluate_expr(expr, ns: dict):
+    """Interpret an allowlisted arithmetic AST; this never compiles or executes Python source."""
     if isinstance(expr, (int, float)):
         return expr
     tree = ast.parse(str(expr), mode="eval")
@@ -154,10 +181,44 @@ def eval_expr(expr, ns: dict):
 
 def git_sha(root: Path) -> str | None:
     """Read the study folder's current Git commit for summary provenance; no files are changed."""
-    try:
-        return subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
-    except Exception:
-        return None
+    current = root.resolve()
+    while current != current.parent:
+        marker = current / ".git"
+        try:
+            if marker.is_dir():
+                git_dir = marker
+            elif marker.is_file():
+                entry = marker.read_text().strip()
+                if not entry.startswith("gitdir:"):
+                    return None
+                git_dir = (current / entry.partition(":")[2].strip()).resolve()
+            else:
+                current = current.parent
+                continue
+            head = (git_dir / "HEAD").read_text().strip()
+            if head.startswith("ref: "):
+                ref = head[5:]
+                common_file = git_dir / "commondir"
+                bases = [git_dir]
+                if common_file.exists():
+                    bases.append((git_dir / common_file.read_text().strip()).resolve())
+                for base in bases:
+                    ref_path = base / ref
+                    if ref_path.is_file():
+                        head = ref_path.read_text().strip()
+                        break
+                else:
+                    for base in bases:
+                        packed = base / "packed-refs"
+                        if packed.is_file():
+                            head = next((line.split()[0] for line in packed.read_text().splitlines()
+                                         if line and not line.startswith(("#", "^")) and line.split()[-1] == ref), "")
+                            if head:
+                                break
+            return head if len(head) in (40, 64) and all(c in "0123456789abcdefABCDEF" for c in head) else None
+        except (OSError, ValueError):
+            return None
+    return None
 
 
 HEADER = ("phase", "run_date", "currency", "fx", "git_sha", "assumptions", "gaps")

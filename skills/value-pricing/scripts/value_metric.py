@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 2 · which quantity does the market meter on, and how steeply? → the packaging axis.
 
 For every `limit_<axis>` column in market/data/plans.csv: the share of priced vendors whose plans scale

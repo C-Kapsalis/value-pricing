@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 4b · D-efficient choice-based conjoint design → panel/design.csv + panel/design_stats.json.
 
 Attributes and levels come from study.yaml conjoint.attributes (price first; every other attribute's

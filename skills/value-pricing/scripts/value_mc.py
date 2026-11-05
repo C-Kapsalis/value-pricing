@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 3 · delivered value per customer, split across features: scenarios → Monte Carlo → attribution → Sobol.
 
 Reads study.yaml (segments, archetypes, scenarios) and value_drivers.yaml (params, types, caps, lines).
@@ -24,13 +23,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from common import Study, eval_expr, per_seg, status, study_arg, write_summary
+from common import Study, evaluate_expr, per_seg, status, study_arg, write_summary
 
 
 # ------------------------------------------------------------------ scenarios
 def draw(spec: dict, seg: str, arch: np.ndarray, band: dict, rng, n: int, ns: dict):
     if "expr" in spec:
-        v = eval_expr(spec["expr"], {**ns, "rng": rng, "n": n})
+        v = evaluate_expr(spec["expr"], {**ns, "rng": rng, "n": n})
         return np.broadcast_to(np.asarray(v, dtype=float), (n,)).copy()
     d = spec["dist"]
     g = lambda k: per_seg(spec[k], seg)
@@ -94,15 +93,15 @@ class Engine:
         self.ns, N = ns, len(scen)
         use = st.cfg["scenarios"].get("feature_in_use") or {}
         self.players = sorted({l["feature"] for l in self.lines} | {x for l in self.lines for x in l.get("needs", [])})
-        self.in_use = {f: (np.broadcast_to(np.asarray(eval_expr(use[f], ns), bool), (N,)) if f in use else np.ones(N, bool)) for f in self.players}
+        self.in_use = {f: (np.broadcast_to(np.asarray(evaluate_expr(use[f], ns), bool), (N,)) if f in use else np.ones(N, bool)) for f in self.players}
         self.q, self.fire, self.extra = [], [], []
         for l in self.lines:
-            self.q.append(np.broadcast_to(np.asarray(eval_expr(l["quantity"], ns), float), (N,)))
-            f = np.asarray(eval_expr(l["trigger"], ns), bool) if "trigger" in l else rng.random(N) < float(l.get("p_fire", 1.0))
+            self.q.append(np.broadcast_to(np.asarray(evaluate_expr(l["quantity"], ns), float), (N,)))
+            f = np.asarray(evaluate_expr(l["trigger"], ns), bool) if "trigger" in l else rng.random(N) < float(l.get("p_fire", 1.0))
             self.fire.append(np.broadcast_to(f, (N,)))
-            self.extra.append({k: np.clip(np.broadcast_to(np.asarray(eval_expr(l[k], ns), float), (N,)), 0, None)
+            self.extra.append({k: np.clip(np.broadcast_to(np.asarray(evaluate_expr(l[k], ns), float), (N,)), 0, None)
                                for k in ("at_risk", "excess") if k in l})
-        self.cap_max = [np.broadcast_to(np.asarray(eval_expr(c["max"], ns), float), (N,)) for c in drivers.get("caps", [])]
+        self.cap_max = [np.broadcast_to(np.asarray(evaluate_expr(c["max"], ns), float), (N,)) for c in drivers.get("caps", [])]
         self.ltypes = np.array([l["type"] for l in self.lines])
         self.vals = self.line_values()
 
@@ -113,7 +112,7 @@ class Engine:
         vals = []
         for l, q, f, ex in zip(self.lines, self.q, self.fire, self.extra):
             t = self.types[l["type"]]
-            v = np.asarray(eval_expr(t["formula"], {**base, **p, "q": q[sl], **{k: x[sl] for k, x in ex.items()}}), float) * f[sl]
+            v = np.asarray(evaluate_expr(t["formula"], {**base, **p, "q": q[sl], **{k: x[sl] for k, x in ex.items()}}), float) * f[sl]
             if t.get("insight"):
                 v = v * p["action_rate"] * p["realisation_rate"]
             vals.append(np.clip(np.broadcast_to(v, f[sl].shape), 0, None))

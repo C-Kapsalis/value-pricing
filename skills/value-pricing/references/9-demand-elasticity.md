@@ -39,6 +39,6 @@ The phase writes `demand/results/summary.json` with `demand_elasticity.products`
 
 ## Test fixture
 
-`selftest.py` creates synthetic repeated customer transactions with a planted negative price elasticity, checks posterior recovery and scenario direction, and covers missing rows and insufficient price variation. These synthetic checks verify code behavior; they do not validate causal identification in real observational data.
+The repository-level self-test creates synthetic repeated customer transactions with a planted negative price elasticity, checks posterior recovery and scenario direction, and covers missing rows and insufficient price variation. These synthetic checks verify code behavior; they do not validate causal identification in real observational data. It is kept outside the published skill folder because it launches analysis scripts for development checks.
 
 The recovery fixture uses invented transaction data and generic segment labels for code checks only. It does not describe a real offering, audience, price, or customer record.

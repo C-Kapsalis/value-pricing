@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 """Ingest knowledge bases (an Obsidian vault, docs, decks, past artifacts) into corpus/index.jsonl.
 
 One record per heading-delimited chunk: source, path, title, heading trail, front matter, tags,
 [[wikilinks]], text. The vault's own structure survives, so "every note tagged #customer" or "the Pricing
-folder" stays queryable. Reads .md .markdown .txt .html .htm, and .pdf when `pdftotext` is on PATH.
+folder" stays queryable. Reads .md .markdown .txt .html .htm, and .pdf with the Python pypdf library.
 Skips .obsidian/, .git/, node_modules/ and files over --max-mb. Read-only on the sources.
 
   ingest_corpus.py --study S --path ~/Vault --path ./decks [--grep "pric|customer"]
@@ -15,11 +14,10 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
-import subprocess
 from collections import Counter
 from pathlib import Path
 
+from pypdf import PdfReader
 import yaml
 from bs4 import BeautifulSoup
 
@@ -33,9 +31,7 @@ TAG = re.compile(r"(?:^|\s)#([A-Za-z][\w/-]+)")
 
 def read(p: Path) -> str:
     if p.suffix.lower() == ".pdf":
-        if not shutil.which("pdftotext"):
-            return ""
-        return subprocess.run(["pdftotext", "-layout", str(p), "-"], capture_output=True, text=True).stdout
+        return "\n".join(page.extract_text() or "" for page in PdfReader(str(p)).pages)
     raw = p.read_text(errors="replace")
     if p.suffix.lower() in (".html", ".htm"):
         soup = BeautifulSoup(raw, "lxml")
@@ -89,7 +85,7 @@ def main():
         for root in a.path:
             root = Path(root).expanduser().resolve()
             for p in sorted(root.rglob("*")):
-                if p.suffix.lower() not in EXT or any(part in SKIP_DIRS for part in p.parts) or not p.is_file():
+                if p.is_symlink() or p.suffix.lower() not in EXT or any(part in SKIP_DIRS for part in p.parts) or not p.is_file():
                     continue
                 if p.stat().st_size > a.max_mb * 1e6:
                     continue

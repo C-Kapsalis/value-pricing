@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Phase 5 · the floor: variable, people and channel cost per customer per segment; fixed-cost carry.
 
 Reads costs.yaml (templates/costs.yaml). Variable lines are per-segment maps (eur_per_customer) or

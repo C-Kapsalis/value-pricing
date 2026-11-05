@@ -15,8 +15,10 @@ that build their content in JavaScript; otherwise plain HTTP.
 from __future__ import annotations
 
 import csv
+import ipaddress
 import json
 import re
+import socket
 import time
 import urllib.robotparser as robotparser
 from collections import deque
@@ -35,47 +37,106 @@ PRICING = re.compile(r"pric|plans?\b|billing|subscribe|buy", re.I)
 SKIP = re.compile(r"\.(png|jpe?g|gif|svg|webp|ico|pdf|zip|mp4|mov|css|js|xml|json|woff2?)(\?|$)|/(login|signin|signup|register|cart|checkout|account|wp-admin)\b|mailto:|tel:", re.I)
 
 
+def web_origin(url: str):
+    try:
+        p = urlparse(url)
+        if p.scheme not in ("http", "https") or not p.hostname or p.username or p.password:
+            return None
+        port = p.port or (443 if p.scheme == "https" else 80)
+        return p.scheme.lower(), p.hostname.rstrip(".").lower(), port
+    except ValueError:
+        return None
+
+
 class Fetcher:
     def __init__(self, delay: float, browser: bool, contact: str):
         self.delay, self.last, self.robots = delay, {}, {}
         self.s = requests.Session()
+        self.s.trust_env = False
         self.s.headers["User-Agent"] = UA.format(contact=contact)
         self.browser = None
+        self.origin = None
         if browser:
             from playwright.sync_api import sync_playwright
             self._pw = sync_playwright().start()
             self.browser = self._pw.chromium.launch()
 
+    def set_origin(self, url: str):
+        self.origin = web_origin(url)
+        if self.origin is None or not self.safe_url(url):
+            raise ValueError("start URL must be a public HTTP(S) URL on the standard port")
+
+    def safe_url(self, url: str) -> bool:
+        origin = web_origin(url)
+        if origin is None or origin != self.origin:
+            return False
+        scheme, host, port = origin
+        if port != (443 if scheme == "https" else 80):
+            return False
+        try:
+            try:
+                addresses = {ipaddress.ip_address(host)}
+            except ValueError:
+                addresses = {ipaddress.ip_address(info[4][0])
+                             for info in socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)}
+        except (OSError, ValueError):
+            return False
+        return bool(addresses) and all(address.is_global for address in addresses)
+
+    def _guard_route(self, route):
+        if self.safe_url(route.request.url):
+            route.continue_()
+        else:
+            route.abort("blockedbyclient")
+
     def allowed(self, url: str) -> bool:
-        p = urlparse(url)
-        host = f"{p.scheme}://{p.netloc}"
+        if not self.safe_url(url):
+            return False
+        hostname = f"[{self.origin[1]}]" if ":" in self.origin[1] else self.origin[1]
+        host = f"{self.origin[0]}://{hostname}:{self.origin[2]}"
         if host not in self.robots:
             rp = robotparser.RobotFileParser()
-            try:
-                r = self.s.get(host + "/robots.txt", timeout=15)
-                rp.parse(r.text.splitlines() if r.status_code == 200 else [])
-            except Exception:
+            code, body = self.get(host + "/robots.txt")
+            if code == 200:
+                rp.parse(body.splitlines())
+            elif code in (404, 410):
                 rp.parse([])
+            else:
+                rp.parse(["User-agent: *", "Disallow: /"])
             self.robots[host] = rp
         return self.robots[host].can_fetch(self.s.headers["User-Agent"], url)
 
     def get(self, url: str) -> tuple[int, str]:
-        host = urlparse(url).netloc
-        code, html = 0, ""
+        if not self.safe_url(url):
+            return 0, "blocked non-public or cross-origin URL"
+        current, redirects = url, 0
         for attempt in range(4):
-            wait = self.delay - (time.time() - self.last.get(host, 0))
+            wait = self.delay - (time.time() - self.last.get(self.origin[1], 0))
             if wait > 0:
                 time.sleep(wait)
-            self.last[host] = time.time()
+            self.last[self.origin[1]] = time.time()
             try:
                 if self.browser:
                     pg = self.browser.new_page(user_agent=self.s.headers["User-Agent"])
-                    resp = pg.goto(url, wait_until="networkidle", timeout=45000)
-                    html, code = pg.content(), (resp.status if resp else 0)
-                    pg.close()
+                    pg.route("**/*", self._guard_route)
+                    try:
+                        resp = pg.goto(current, wait_until="networkidle", timeout=45000)
+                        if not self.safe_url(pg.url):
+                            return 0, "blocked cross-origin browser navigation"
+                        html, code = pg.content(), (resp.status if resp else 0)
+                    finally:
+                        pg.close()
                 else:
-                    r = self.s.get(url, timeout=30)
-                    html, code = r.text, r.status_code
+                    r = self.s.get(current, timeout=30, allow_redirects=False)
+                    code = r.status_code
+                    if 300 <= code < 400 and r.headers.get("Location"):
+                        target = urljoin(current, r.headers["Location"])
+                        redirects += 1
+                        if redirects > 5 or not self.safe_url(target):
+                            return 0, "blocked cross-origin or non-public redirect"
+                        current = target
+                        continue
+                    html = r.text
                 if code in (429, 500, 502, 503, 504):
                     time.sleep(self.delay * 2 ** (attempt + 1))
                     continue
@@ -131,7 +192,7 @@ def crawl(f: Fetcher, start: str, out: Path, max_pages: int, state: Path, pricin
         for l in state.read_text().splitlines():
             r = json.loads(l)
             done[r["url"]] = r.get("links")
-    host = urlparse(start).netloc
+    f.set_origin(start)
     q, seen, n = deque([start]), {start}, 0
     if pricing_only:
         for guess in ("/pricing", "/plans"):
@@ -144,7 +205,8 @@ def crawl(f: Fetcher, start: str, out: Path, max_pages: int, state: Path, pricin
         for l in links:
             if l not in seen:
                 seen.add(l)
-                (q.appendleft if PRIORITY.search(urlparse(l).path) else q.append)(l)
+                if f.safe_url(l):
+                    (q.appendleft if PRIORITY.search(urlparse(l).path) else q.append)(l)
 
     while q and n < max_pages:
         url = q.popleft()
@@ -163,7 +225,7 @@ def crawl(f: Fetcher, start: str, out: Path, max_pages: int, state: Path, pricin
                 title, md, links = to_markdown(html, url)
                 save(out, url, code, title, md)
                 n += 1
-                nxt = [l for l in links if urlparse(l).netloc == host and not SKIP.search(l)]
+                nxt = [l for l in links if f.safe_url(l) and not SKIP.search(l)]
                 if pricing_only:
                     nxt = [l for l in nxt if PRICING.search(urlparse(l).path)]
                 nxt = sorted(set(nxt), key=lambda l: (not PRIORITY.search(urlparse(l).path), len(l)))

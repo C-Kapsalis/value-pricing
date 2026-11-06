@@ -63,7 +63,7 @@ class Study:
 
     def archetype_share(self, seg: str) -> dict:
         if not self.archetypes:
-            raise ValueError("configure evidence-based archetypes and shares before using this method")
+            return {}  # No archetype stratification was configured.
         raw = {}
         for archetype in self.archetypes:
             key = archetype["id"]
@@ -156,6 +156,17 @@ def _expression_node(node, ns):
     if isinstance(node, ast.IfExp):
         return np.where(_expression_node(node.test, ns), _expression_node(node.body, ns), _expression_node(node.orelse, ns))
     if isinstance(node, ast.Call):
+        allowed = {"abs": 1, "max": 2, "min": 2}
+        numpy_arity = {"abs": 1, "clip": 3, "exp": 1, "log": 1, "maximum": 2,
+                       "minimum": 2, "sqrt": 1, "where": 3}
+        arity = allowed.get(node.func.id) if isinstance(node.func, ast.Name) else None
+        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+            if node.func.value.id == "np":
+                arity = numpy_arity.get(node.func.attr)
+            elif node.func.value.id == "rng" and node.func.attr == "lognormal":
+                arity = (0, 1, 2, 3)
+        if arity is None or len(node.args) not in (arity if isinstance(arity, tuple) else (arity,)):
+            raise ValueError("call target or argument count is not allowed")
         fn = _expression_node(node.func, ns)
         if not callable(fn) or node.keywords:
             raise ValueError("only positional calls to allowlisted functions are permitted in value expressions")
@@ -178,6 +189,9 @@ def evaluate_expr(expr, ns: dict):
     tree = ast.parse(str(expr), mode="eval")
     return _expression_node(tree.body, ns)
 
+
+# Compatibility name for existing study integrations.
+eval_expr = evaluate_expr
 
 def git_sha(root: Path) -> str | None:
     """Read the study folder's current Git commit for summary provenance; no files are changed."""

@@ -30,6 +30,12 @@ def main():
     st = Study(x.study)
     A = pd.read_csv(st.root / x.a).set_index("vendor")
     B = pd.read_csv(st.root / x.b).set_index("vendor")
+    for frame in (A, B):
+        for column in frame.columns:
+            if column.endswith(("__unclear", "__missing")):
+                feature = column.rsplit("__", 1)[0]
+                if feature in frame:
+                    frame.loc[frame[column].fillna(0).astype(bool), feature] = float("nan")
     common = A.index.intersection(B.index)
     rows = []
     features = [c for c in A.columns if not c.endswith(("__unclear", "__missing")) and c in B.columns]

@@ -40,7 +40,7 @@ class Data:
         des = pd.read_csv(st.root / "panel/design.csv")
         self.T = int(des[des.task_type == "random"].task.max())
         self.A = int(des.alt.max())
-        self.lv = {(int(r.version), int(r.task), int(r.alt)): r._asdict() for r in des.itertuples()}
+        self.lv = {(int(r["version"]), int(r["task"]), int(r["alt"])): r for r in des.to_dict("records")}
 
     def x_of(self, levels: dict):
         v = np.zeros(self.P)

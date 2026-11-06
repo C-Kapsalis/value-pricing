@@ -41,6 +41,7 @@ SEG_K = {"micro": 0.6, "small": 1.0, "mid": 1.6, "large": 2.4}
 
 
 def run(T, script, *args):
+    print(f"RUN {script}", flush=True)
     p = subprocess.run([sys.executable, str(HERE / script), "--study", str(T), *args], capture_output=True, text=True, cwd=HERE)
     if p.returncode:
         raise SystemExit(f"{script} failed:\n{p.stdout[-2000:]}\n{p.stderr[-3000:]}")
@@ -53,6 +54,33 @@ def build(T: Path):
         shutil.copy(TPL / f, T / f)
     shutil.copy(TPL / "proposals.yaml", T / "synthesis/proposals.yaml")
     cfg = yaml.safe_load((T / "study.yaml").read_text())
+    # Entirely fictional integration fixture, independent of the blank public templates.
+    cfg["currency"] = "USD"
+    cfg["product"] = {"name": "Synthetic service", "description": "Fictional test offering"}
+    cfg["segments"] = {"axis": "usage_units", "axis_label": "synthetic units per month", "bands": [
+        {"id": key, "range": [100, 5000], "reference_volume": 1000, "share": 0.25} for key in SEG_K]}
+    cfg["archetypes"] = [{"id": "sample", "share": 1.0, "roles": ["buyer"], "label": "fictional organisation",
+                          "business_model": "provides a synthetic service", "reference_alternative": {"cost": 5, "text": "a fictional alternative"}}]
+    cfg["scenarios"] = {"n": 3000, "seed": 1, "variables": {"volume": {"dist": "uniform", "low": 10, "high": 100}}, "feature_in_use": {}}
+    cfg["conjoint"] = {"attributes": {"price": [10, 30, 50, 80], "access_level": ["basic", "extended"],
+        "service_level": ["standard", "standard + enhanced + premium service"], "onboarding": ["self", "assisted"],
+        "support": ["basic", "enhanced"]}, "our_config": {"access_level": 1, "service_level": 1, "onboarding": 1, "support": 1},
+        "tasks": 12, "alternatives": 3, "anchors": [30, 60], "paraphrases": 2, "labels": {}, "frame_csv": None}
+    cfg["cost"] = {"candidate_prices": [10, 30, 50], "margin_targets": [0.7, 0.8]}
+    cfg["lenses"] = {"evc_capture": 0.3}
+    taxonomy = {"features": [{"id": key, "group": "synthetic", "ours": "no" if key == "outcome_measurement" else "yes",
+                              "desc": "Fictional test attribute"} for key in PLANTED]}
+    drivers = {"params": {"unit_value": {"value": 2, "range": [1, 3]}}, "types": {"benefit": {"formula": "q * unit_value"}},
+               "caps": [], "lines": [{"id": key, "feature": key, "needs": ["delivery_scope"], "type": "benefit", "quantity": "volume"}
+                                     for key in ("service_quality", "outcome_measurement")]}
+    costs = {"lines": [{"line": "synthetic delivery", "kind": "variable", "eur_per_customer": 2},
+                       {"line": "synthetic fixed", "kind": "fixed", "eur_month": 100}],
+             "people": {"hourly_rate": 20, "support_hours_per_month": 0.1}, "channel": {"processing": 0.02}, "margin_targets": [0.7, 0.8]}
+    proposals = {"proposals": [{"id": "synthetic", "name": "synthetic", "tiers": [{"name": "sample", "price_grid": [10, 30, 50],
+                   "features": "all", "config": cfg["conjoint"]["our_config"]}]}]}
+    for name, content in (("taxonomy.yaml", taxonomy), ("value_drivers.yaml", drivers), ("costs.yaml", costs),
+                          ("synthesis/proposals.yaml", proposals)):
+        (T / name).write_text(yaml.safe_dump(content, sort_keys=False))
     cfg["conjoint"].update(versions=6, personas_per_segment=12, min_personas_per_archetype=2)
     cfg["scenarios"]["n"] = 3000
     (T / "study.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False, allow_unicode=True))
@@ -203,7 +231,15 @@ def main():
         run(T, "conjoint_fit.py", *args)
         lv = {(r["attribute"], r["level"]): r["pooled"]["mean"] for r in json.loads((T / "panel/results/conjoint.json").read_text())["wtp_per_level"]}
         got = lv[("service_level", "standard + enhanced + premium service")]
-        checks.append((f"panel ({name}): top service-level WTP {got:.1f} within 25% of planted ≈{PANEL_WTP['service_level'] * 1.03:.1f}", abs(got / (PANEL_WTP["service_level"] * 1.03) - 1) < 0.25))
+        study_cfg = yaml.safe_load((T / "study.yaml").read_text())
+        bands = study_cfg["segments"]["bands"]
+        population_scale = sum(b["share"] * SEG_K[b["id"]] for b in bands) / sum(b["share"] for b in bands)
+        anchors = study_cfg["conjoint"]["anchors"]
+        anchor_scale = sum(1.1 if anchor == max(anchors) else 1.0 for anchor in anchors) / len(anchors)
+        expected = PANEL_WTP["service_level"] * population_scale * anchor_scale
+        checks.append((f"panel ({name}): top service-level WTP {got:.1f} within 25% of planted {expected:.1f}",
+                       abs(got / expected - 1) < 0.25))
+
     run(T, "synthesize.py")
     fvt = pd.read_csv(T / "synthesis/data/feature_value.csv").set_index("feature_id")
     checks.append(("synthesis: outcome_measurement (ours: no, planted premium) classed roadmap", fvt.loc["outcome_measurement", "class"] == "roadmap"))

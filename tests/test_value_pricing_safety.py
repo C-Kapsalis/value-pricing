@@ -40,7 +40,7 @@ class SafeExpressionTests(unittest.TestCase):
 
 class SelfTestDestinationTests(unittest.TestCase):
     def test_existing_directory_is_refused_without_modification(self):
-        script = SCRIPTS / "selftest.py"
+        script = ROOT / "tests" / "selftest_value_pricing.py"
         with tempfile.TemporaryDirectory() as parent:
             destination = Path(parent) / "existing"
             destination.mkdir()

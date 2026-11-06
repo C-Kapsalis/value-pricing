@@ -17,7 +17,10 @@ import re
 from collections import Counter
 from pathlib import Path
 
-from pypdf import PdfReader
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
 import yaml
 from bs4 import BeautifulSoup
 
@@ -31,6 +34,8 @@ TAG = re.compile(r"(?:^|\s)#([A-Za-z][\w/-]+)")
 
 def read(p: Path) -> str:
     if p.suffix.lower() == ".pdf":
+        if PdfReader is None:
+            raise RuntimeError("PDF ingestion requires pypdf; install scripts/requirements.txt")
         return "\n".join(page.extract_text() or "" for page in PdfReader(str(p)).pages)
     raw = p.read_text(errors="replace")
     if p.suffix.lower() in (".html", ".htm"):

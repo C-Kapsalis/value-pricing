@@ -16,6 +16,7 @@ from __future__ import annotations
 import csv
 import ipaddress
 import json
+import math
 import re
 import socket
 import time
@@ -54,6 +55,8 @@ def web_origin(url: str):
 
 class Fetcher:
     def __init__(self, delay: float, browser: bool, contact: str):
+        if not math.isfinite(delay) or delay < 0:
+            raise ValueError("delay must be finite and non-negative")
         self.delay, self.last, self.robots = delay, {}, {}
         self.s = requests.Session()
         self.s.trust_env = False
@@ -89,7 +92,7 @@ class Fetcher:
         return bool(addresses) and all(address.is_global for address in addresses)
 
     def _guard_route(self, route):
-        if self.allowed(route.request.url):
+        if route.request.method in ("GET", "HEAD") and self.allowed(route.request.url):
             self._wait_for_host()
             route.continue_()
         else:
@@ -97,10 +100,10 @@ class Fetcher:
 
     def _wait_for_host(self):
         host = self.origin[1]
-        wait = self.delay - (time.time() - self.last.get(host, 0))
+        wait = self.delay - (time.monotonic() - self.last.get(host, 0))
         if wait > 0:
             time.sleep(wait)
-        self.last[host] = time.time()
+        self.last[host] = time.monotonic()
 
     def allowed(self, url: str) -> bool:
         if not self.safe_url(url):
@@ -131,8 +134,10 @@ class Fetcher:
             self._wait_for_host()
             try:
                 if self.browser:
-                    pg = self.browser.new_page(user_agent=self.s.headers["User-Agent"])
+                    pg = self.browser.new_page(user_agent=self.s.headers["User-Agent"], service_workers="block")
                     pg.route("**/*", self._guard_route)
+                    # An intercepted socket is local-only unless connect_to_server is called.
+                    pg.route_web_socket("**/*", lambda ws: None)
                     try:
                         resp = pg.goto(current, wait_until="networkidle", timeout=45000)
                         if not self.safe_url(pg.url):

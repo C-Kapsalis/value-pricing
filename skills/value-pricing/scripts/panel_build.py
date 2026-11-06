@@ -49,6 +49,8 @@ def main():
     ap.add_argument("--what", help="what is being bought, e.g. 'a marketing analytics service'")
     a = ap.parse_args()
     st = Study(a.study)
+    if not st.archetypes:
+        ap.error("configure archetypes and explicit shares before building a simulated panel")
     cj, cur, prod = st.cfg["conjoint"], st.cfg.get("currency", "EUR"), st.cfg["product"]
     what = a.what or f"a product like {prod['name']}"
     labels, attrs = cj.get("labels", {}), cj["attributes"]

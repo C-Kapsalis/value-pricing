@@ -179,14 +179,6 @@ def main():
     ours = {f["id"]: status(f.get("ours", "no")) for f in tax["features"]}
     vendors = pd.read_csv(D / "vendors.csv").set_index("vendor")
     feats = pd.read_csv(D / "vendor_features.csv").set_index("vendor")
-    unresolved = feats.reindex(vendors.index.drop("__ours__", errors="ignore")).reindex(columns=fids).isna()
-    if unresolved.any(axis=None):
-        n_rows = int(unresolved.any(axis=1).sum())
-        n_cells = int(unresolved.sum().sum())
-        raise SystemExit(
-            f"{n_cells} competitor feature codings are unclear or missing across {n_rows} vendors. "
-            "Resolve those cells from source evidence before fitting; unknown is not absence."
-        )
     if (D / "reference_prices.csv").exists():
         ref = pd.read_csv(D / "reference_prices.csv").set_index("vendor")
     else:
@@ -201,6 +193,19 @@ def main():
     feats = feats.drop(index="__ours__", errors="ignore")
     if a.direct_only and "tier" in vendors:
         vendors = vendors[is_direct(vendors.tier)]
+    for feature in fids:
+        for suffix in ("__unclear", "__missing"):
+            flag_column = feature + suffix
+            if feature in feats and flag_column in feats:
+                feats.loc[feats[flag_column].fillna(0).astype(bool), feature] = np.nan
+    unresolved = feats.reindex(vendors.index.drop("__ours__", errors="ignore")).reindex(columns=fids).isna()
+    if unresolved.any(axis=None):
+        n_rows = int(unresolved.any(axis=1).sum())
+        n_cells = int(unresolved.sum().sum())
+        raise SystemExit(
+            f"{n_cells} competitor feature codings are unclear or missing across {n_rows} vendors. "
+            "Resolve those cells from source evidence before fitting; unknown is not absence."
+        )
     X, controls, fe, fcols_all = design(vendors, feats, ref, fids)
     priced = ref.index[(ref.get("price_state") == "priced") & (ref["ref_main"] > 0)].intersection(X.index)
     if len(priced) < 30:

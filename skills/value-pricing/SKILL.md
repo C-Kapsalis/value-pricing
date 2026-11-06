@@ -7,6 +7,9 @@ metadata:
     requires:
       bins: [python3]
     envVars:
+      - name: CLAUDE_CONFIG_DIR
+        required: false
+        description: Optional configuration directory for the explicitly selected Claude CLI runner.
       - name: ANTHROPIC_API_KEY
         required: false
         description: Used only by the optional Anthropic API runner after explicit transfer confirmation.
@@ -67,10 +70,10 @@ Do not infer a business model, unit, segment, attribute, cost, sample, or result
 ## Permissions and data handling
 
 - This skill declares no MCP servers or tools and does not run automatically. Its scripts run only when explicitly invoked by the user or agent.
-- Local file access is limited to the configured study directory. `ingest_corpus.py` recursively reads only paths explicitly supplied with `--path`; outputs are written under the study directory. It does not search the home directory or upload files.
+- Analysis inputs and outputs use the configured study directory unless an explicit source or output path is supplied; Git provenance reads its repository metadata. `ingest_corpus.py` recursively reads only paths explicitly supplied with `--path`; outputs are written under the study directory. It skips symlinked files and does not scan other directories automatically or upload files.
 - `crawl_site.py` makes network requests only when explicitly run. It stays on the selected public origin, checks that origin's `robots.txt`, rate-limits browser and HTTP requests, and fails closed when the robots policy cannot be read. It does not transmit local study files.
-- `llm_batch.py` sends the selected prompt files and their included source text to Anthropic's API only when run with `--confirm-external-transfer`. The API key is read by the Anthropic SDK for that request; the skill does not enumerate environment variables. Review and minimize study data first.
-- No script launches a shell command or executes downloaded code. PDF text extraction uses the local Python `pypdf` library.
+- `llm_batch.py` retains `--runner cli` (default) and `--runner api`. Both send selected prompt files and included source text to the model provider, and require `--confirm-external-transfer`. The API key is read by the Anthropic SDK for that request; the skill does not enumerate environment variables. Review and minimize study data first.
+- The optional CLI runner launches the installed `claude` executable using a fixed argument list, without a shell, tools, MCP, settings, or saved sessions. It passes only `PATH`, `HOME`, `TMPDIR`, `LANG`, `LC_ALL`, `LC_CTYPE`, `TERM`, and optional `CLAUDE_CONFIG_DIR`; unrelated secrets are excluded. No script downloads and executes remote scripts. PDF text extraction uses the local Python `pypdf` library.
 
 ## Configure a study
 
@@ -90,7 +93,7 @@ pricing-study/
   market/ cost/ value/ panel/ synthesis/   outputs for selected phases
 ```
 
-Python scripts are in `scripts/`; invoke them as `python scripts/<name>.py --help`. Create an isolated environment and install `scripts/requirements.txt` only when a selected method needs the scripts. The optional model runner sends data to Anthropic only after the explicit transfer flag; the main workflow can also be run without any model provider.
+Python scripts are in `scripts/`; invoke them as `python scripts/<name>.py --help`. Create an isolated environment and install `scripts/requirements.txt` only when a selected method needs the scripts. Both optional model runners send data to the provider only after the explicit transfer flag; the main workflow can also be run without any model provider.
 
 ## Workflow
 

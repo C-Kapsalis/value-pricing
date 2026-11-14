@@ -60,10 +60,10 @@ Alternatively, download the skill archive from a GitHub release and place its `v
 
 ### Local analysis environment
 
-The Python analysis scripts require Python 3.11 or later. Create an environment and install the included requirements:
+The Python analysis scripts require Python 3.12 or later (the pinned numpy release needs it). Create an environment and install the included requirements:
 
 ```sh
-uv venv .venv-pricing
+uv venv --python 3.12 .venv-pricing
 uv pip install --python .venv-pricing/bin/python -r <path>/skills/value-pricing/scripts/requirements.txt
 ```
 

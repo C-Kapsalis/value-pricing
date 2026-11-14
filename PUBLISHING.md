@@ -23,7 +23,7 @@ The script writes four archives to the ignored `dist/` directory:
 
 Archives contain source and blank, configurable templates only. They do not include a
 customer study, credentials, browser profile, or generated research data. The
-analysis scripts need Python 3.11 or later; install the requirements file in a
+analysis scripts need Python 3.12 or later; install the requirements file in a
 virtual environment. Browser crawling may additionally require Playwright and
 its Chromium browser. See the README for setup details.
 

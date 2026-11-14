@@ -4,6 +4,10 @@ Value Pricing is an evidence-led pricing research workflow that helps businesses
 
 The workflow is designed for products and services across B2B and B2C markets. It can be configured for recurring, one-off, tiered, usage-based, transaction-based, project, retainer, licence and hybrid pricing. Those are options, not assumptions: define the units, segments, value drivers, alternatives and commercial terms that fit the study.
 
+[![Video walkthrough: Every Price Is a Hypothesis](https://img.youtube.com/vi/mQafPyjqoU0/maxresdefault.jpg)](https://youtu.be/mQafPyjqoU0)
+
+▶ [Watch the video walkthrough](https://youtu.be/mQafPyjqoU0)
+
 ## What it does
 
 The skill helps a team:

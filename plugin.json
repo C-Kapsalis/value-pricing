@@ -16,7 +16,7 @@
       "interface": {
         "displayName": "Value Pricing",
         "shortDescription": "Evidence-led pricing research",
-        "longDescription": "Run configurable pricing research for products, services, and other business models. Select methods to fit the decision and evidence, assess market references, customer value, and delivery economics, then document pricing hypotheses and validation needs. Simulated research is exploratory, not a demand forecast. Python scripts need a local shell and Python 3.11 or later.",
+        "longDescription": "Run configurable pricing research for products, services, and other business models. Select methods to fit the decision and evidence, assess market references, customer value, and delivery economics, then document pricing hypotheses and validation needs. Simulated research is exploratory, not a demand forecast. Python scripts need a local shell and Python 3.12 or later.",
         "developerName": "Christoforos Kapsalis",
         "category": "Productivity",
         "capabilities": ["Instructions", "Pricing strategy", "Market research"],
